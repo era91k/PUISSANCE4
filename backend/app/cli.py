@@ -25,8 +25,10 @@ def play_move(game_id, column, player_id):
     response = requests.put(f"{BASE_URL}/game/{game_id}/play?column={column}&player_id={player_id}")
     if response.status_code == 200:
         print("Move played successfully!")
+        return response.json()  # Renvoie l'état mis à jour du jeu
     else:
         print("Failed to play move:", response.json())
+        return None
 
 def get_game_state(game_id):
     response = requests.get(f"{BASE_URL}/game/{game_id}")
@@ -40,18 +42,30 @@ def main():
     game_data = create_game()
     while True:
         print_board(game_data["board"])
-        
+
         current_turn = game_data["current_turn"]
         column = int(input(f"Player {current_turn}, enter the column (0-6) to drop your piece: "))
-        
-        play_move(game_data["id"], column, current_turn)
-        
-        game_state = get_game_state(game_data["id"])
+
+        game_state = play_move(game_data["id"], column, current_turn)
+
         if game_state:
-            game_data = game_state
-        
-        # Switch turn (simple)
-        game_data["current_turn"] = 2 if current_turn == 1 else 1
+            game_data = game_state  # Mettre à jour les données du jeu
+
+            # Afficher le dernier coup joué
+            print(f"Player {current_turn} played in column {column}.")
+            
+            # Vérifier si le jeu est terminé
+            if game_data["status"] == "won":
+                print(f"Player {current_turn} wins!")
+                print_board(game_data["board"])  # Afficher le plateau final
+                break  # Terminer la boucle si un joueur a gagné
+            elif game_data["status"] == "draw":
+                print("The game is a draw!")
+                print_board(game_data["board"])  # Afficher le plateau final
+                break  # Terminer la boucle si la partie est un match nul
+
+            # Passer au tour du joueur suivant
+            game_data["current_turn"] = 2 if current_turn == 1 else 1
 
 if __name__ == "__main__":
     main()
