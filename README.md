@@ -23,3 +23,10 @@
 - Adopter une architecture micro-services
 
 ## **FrontBack**
+
+Lancer le serveur FastAPI
+
+uvicorn app.main:app --reload
+
+
+Tester le jeu en lançant le script cli.py
