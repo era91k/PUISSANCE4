@@ -1,0 +1,287 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+}
+#board {
+    display: grid;
+    grid-template-columns: repeat(7, 50px);
+    gap: 5px;
+    background-color: blue; /* Couleur de la grille en bleu */
+    padding: 5px;
+    border-radius: 10px;
+    z-index: 100;
+    position: relative; /* Nécessaire pour le positionnement absolu des pièces */
+}
+.cell {
+    width: 50px;
+    height: 50px;
+    background-color: #fff;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+}
+.cell:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+.piece {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    z-index: 1;
+    transition: transform 0.5s ease; /* Animation de chute */
+}
+.player1 {
+    background-color: red;
+}
+.player2 {
+    background-color: yellow;
+}
+#message {
+    margin-top: 20px;
+    font-size: 24px;
+    text-align: center;
+}
+
+
+#nameForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    background-color: rgba(255, 255, 255, 0.2); 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 5%;
+    border-radius: 15px;
+    backdrop-filter: blur(10px); 
+    transform: translateY(-10px); 
+    opacity: 0.9;
+}
+
+#nameForm h1, 
+#nameForm input, 
+#nameForm button {
+    filter: none;
+    opacity: 1; 
+}
+    
+#nameForm input {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+    filter: blur(0);
+
+
+}
+#startButton, #restartButton {
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.blink {
+    animation: blink-animation 0.5s infinite;
+}
+@keyframes blink-animation {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+.confetti {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10;
+}
+.confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f39c12;
+    animation: fall 2s linear infinite;
+}
+@keyframes fall {
+    to { transform: translateY(100vh); }
+}
+
+#nameForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #fff;
+    width: 300px;
+}
+
+input[type="text"] {
+    font-size: 16px;
+    color: inherit; 
+    padding: 10px;
+    width: 100%;
+    border: none;
+    outline: none;
+    background: none;
+}
+
+input::placeholder {
+    color: #999;
+}
+
+.color-indicator {
+    width: 25px;
+    height: 20px;
+    border-radius: 100%;
+}
+
+.red {
+    background-color: red;
+}
+
+.yellow {
+    background-color: yellow;
+}
+
+#startButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: blue;
+    /*animation: colorShift 10s ease-in-out infinite;*/
+    transition: background-color 0.5s ease;
+}
+
+@keyframes colorShift {
+    0% { background-color: red; }
+    50% { background-color: yellow; }
+    100% { background-color: red; }
+}
+
+#particles-js{
+    border: none;
+    margin: 0;
+    
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+    position: relative;
+    overflow: hidden; /* Permet de cacher les éléments débordants */
+}
+
+#particles-js {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Met les particules derrière le contenu */
+}
+
+#nameForm, #board, #message {
+    z-index: 1; /* Assure que le formulaire et les autres éléments sont au-dessus des particules */
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(7, 50px);
+    gap: 5px;
+    background-color: blue;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.cell {
+    width: 50px;
+    height: 50px;
+    background-color: #fff;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+}
+
+.cell:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.piece {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    z-index: 1;
+    transition: transform 0.5s ease;
+}
+
+.player1 {
+    background-color: red;
+}
+
+.player2 {
+    background-color: yellow;
+}
+
+#message {
+    margin-top: 20px;
+    font-size: 24px;
+    text-align: center;
+}
+
+#nameForm {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+#nameForm input {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+#startButton, #restartButton {
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.blink {
+    animation: blink-animation 0.5s infinite;
+}
+
+@keyframes blink-animation {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
