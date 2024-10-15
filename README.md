@@ -24,9 +24,16 @@
 
 ## **FrontBack**
 
-Lancer le serveur FastAPI
+Étape 1 : Construire l'Image Docker
 
-uvicorn app.main:app --reload
+docker-compose build
 
+Étape 2 : Démarrer le Conteneur Docker
+docker-compose up
 
-Tester le jeu en lançant le script cli.py
+Étape 3 : Accéder à la Documentation
+
+Swagger UI : http://localhost:8000/docs
+ReDoc : http://localhost:8000/redoc
+
+Pour tester : exécution du script cli.py
