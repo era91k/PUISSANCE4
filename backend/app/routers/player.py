@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.models import Player
+from app.model_game import Player
 from typing import List
 
 router = APIRouter()

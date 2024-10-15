@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from app.models import Game
+from app.model_game import Game
 from app.utils import check_winner  # Fonction pour vérifier les conditions de victoire
 from typing import List
 

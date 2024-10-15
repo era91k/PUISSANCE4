@@ -1,10 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
-
-# Modèle pour un joueur
-class Player(BaseModel):
-    id: int
-    name: str
+from app.model_player import Player
 
 # Modèle pour une partie de Puissance 4
 class Game(BaseModel):
