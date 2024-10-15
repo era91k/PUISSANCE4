@@ -1,10 +1,24 @@
-# PUISSANCE4
-Projet PUISSANCE4
-Membres du groupe :
-Rachad Marwane
-Lekouara Abdelrafik
-Antunes Mendes Alexandre
-Felli Mouheb
-Levacher Jimmy
-Gomes Nicolas
-Era
+
+# **PUISSANCE 4**  
+**Projet de Développement AOS**
+
+## **Membres de l'Équipe**
+- **Rachad Marwane**  
+- **Lekouara Abdelrafik**  
+- **Antunes Mendes Alexandre**  
+- **Felli Mouheb**  
+- **Levacher Jimmy**  
+- **Gomes Nicolas**  
+- **Andirandalaoarivony Era**  
+
+## **Technologies Utilisées**
+- **Backend** : Python, NodesJS
+- **Frontend** : HTML, CSS, JavaScript
+- **Base de Données** : MySQL
+
+## **Objectifs du Projet**
+- Développer un jeu de Puissance 4 jouable en local et en ligne.
+- Implémenter un mode d'apprentissage permettant de jouer contre l’ordinateur.
+- Enregistrer les statistiques de jeu des utilisateurs (nombre de parties jouées, gagnées, etc.).
+- Adopter une architecture micro-services
+
