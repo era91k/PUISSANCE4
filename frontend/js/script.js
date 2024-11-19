@@ -4,6 +4,7 @@ const board = Array.from(Array(rows), () => Array(cols).fill(null));
 let currentPlayer = 1;
 let player1Name = '';
 let player2Name = '';
+const BASE_URL = "http://127.0.0.1:8000"
 
 const boardElement = document.getElementById('board');
 const messageElement = document.getElementById('message');
@@ -44,33 +45,34 @@ function resetGame() {
     restartButton.style.display = 'none'; // Cacher le bouton rejouer
 }
 
-function createBoard() {
+async function createBoard(gameData) {
+    gameData = await createGame(player1Name, player2Name);
     for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
             cell.dataset.col = c;
-            cell.addEventListener('click', () => handleClick(c));
+            cell.addEventListener('click', () => handleClick(c, gameData));
             boardElement.appendChild(cell);
         }
     }
 }
 
-function handleClick(col) {
-    for (let r = rows - 1; r >= 0; r--) {
-        if (!board[r][col]) {
-            board[r][col] = currentPlayer;
-            dropPiece(r, col);
-            if (checkWin(r, col)) {
-                celebrateWin(r, col);
-            } else {
-                currentPlayer = currentPlayer === 1 ? 2 : 1;
-                messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} à vous de jouer !`;
-            }
-            return;
+async function handleClick(col, gameData) {
+    game_state = await playMove(gameData['id'], col, currentPlayer)
+    console.log(game_state)
+    if (game_state){
+        dropPiece(game_state['row'], col);
+        gameData = game_state
+        if (gameData['status'] == 'won'){
+            celebrateWin()
+        } else {
+            currentPlayer = gameData['current_turn']
+            messageElement.textContent = `${currentPlayer} à vous de jouer !`;
         }
     }
 }
+
 
 function dropPiece(row, col) {
     const piece = document.createElement('div');
@@ -87,50 +89,13 @@ function dropPiece(row, col) {
     });
 }
 
-function celebrateWin(row, col) {
+function celebrateWin() {
     messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} a gagné !`;
     boardElement.style.pointerEvents = 'none';
     restartButton.style.display = 'block'; // Afficher le bouton rejouer
-
-    // Récupérer la direction des pièces gagnantes
-    const winPieces = getWinningPieces(row, col);
-    winPieces.forEach(([r, c]) => {
-        const cell = boardElement.children[r * cols + c];
-        cell.classList.add('blink'); // Appliquer le clignotement
-    });
-
     createConfetti();
 }
 
-function getWinningPieces(row, col) {
-    const directions = [
-        [1, 0], // horizontal
-        [0, 1], // vertical
-        [1, 1], // diagonal \
-        [1, -1] // diagonal /
-    ];
-    let winPieces = [];
-    for (const [rowInc, colInc] of directions) {
-        let count = 0;
-        let pieces = [];
-        for (let i = -3; i <= 3; i++) {
-            const r = row + i * rowInc;
-            const c = col + i * colInc;
-            if (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === currentPlayer) {
-                count++;
-                pieces.push([r, c]);
-                if (count === 4) {
-                    winPieces = pieces;
-                    break;
-                }
-            } else {
-                count = 0;
-                pieces = [];
-            }
-        }
-    }
-    return winPieces;
-}
 
 function createConfetti() {
   confettiElement.style.display = 'block';
@@ -150,24 +115,59 @@ function createConfetti() {
   }
 }
 
-function checkWin(row, col) {
-    return checkDirection(row, col, 1, 0) || // Horizontal
-            checkDirection(row, col, 0, 1) || // Vertical
-            checkDirection(row, col, 1, 1) || // Diagonal \
-            checkDirection(row, col, 1, -1);  // Diagonal /
+
+async function createGame(player1, player2) {
+    const gameData = {
+        id : 1,
+        players: [
+            { id: 1, name: player1 },
+            { id: 2, name: player2 }
+        ],
+        current_turn: 1,
+        board: Array.from({ length: 6 }, () => Array(7).fill(0))  // Plateau vide
+    };
+
+    try {
+        const response = await fetch(`${BASE_URL}/game/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(gameData)
+        });
+
+        if (response.ok) {
+            const game = await response.json();  // Attendre le JSON
+            console.log("Game created successfully:", game);
+            return game;  // Retourner l'objet game créé
+        } else {
+            const errorData = await response.json();  // Attendre le JSON des erreurs
+            console.error("Failed to create game:", errorData.detail);  // Accéder au message d'erreur
+            return null;  // Retourner null si la création échoue
+        }
+    } catch (error) {
+        console.error("Error creating game:", error);
+        return null;  // Retourner null en cas d'erreur
+    }
 }
 
-function checkDirection(row, col, rowInc, colInc) {
-    let count = 0;
-    for (let i = -3; i <= 3; i++) {
-        const r = row + i * rowInc;
-        const c = col + i * colInc;
-        if (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === currentPlayer) {
-            count++;
-            if (count === 4) return true;
+
+async function playMove(gameId, column, playerId) {
+    try {
+        const response = await fetch(`${BASE_URL}/game/${gameId}/play?column=${column}&player_id=${playerId}`, {
+            method: 'PUT'
+        });
+
+        if (response.ok) {
+            console.log("Move played successfully!");
+            return await response.json();  // Renvoie l'état mis à jour du jeu
         } else {
-            count = 0;
+            const errorData = await response.json();
+            console.error("Failed to play move:", errorData);
+            return null;
         }
+    } catch (error) {
+        console.error("Error:", error);
+        return null;
     }
-    return false;
 }
