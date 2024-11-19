@@ -96,35 +96,6 @@ function celebrateWin() {
     createConfetti();
 }
 
-function getWinningPieces(row, col) {
-    const directions = [
-        [1, 0], // horizontal
-        [0, 1], // vertical
-        [1, 1], // diagonal \
-        [1, -1] // diagonal /
-    ];
-    let winPieces = [];
-    for (const [rowInc, colInc] of directions) {
-        let count = 0;
-        let pieces = [];
-        for (let i = -3; i <= 3; i++) {
-            const r = row + i * rowInc;
-            const c = col + i * colInc;
-            if (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === currentPlayer) {
-                count++;
-                pieces.push([r, c]);
-                if (count === 4) {
-                    winPieces = pieces;
-                    break;
-                }
-            } else {
-                count = 0;
-                pieces = [];
-            }
-        }
-    }
-    return winPieces;
-}
 
 function createConfetti() {
   confettiElement.style.display = 'block';
@@ -144,27 +115,6 @@ function createConfetti() {
   }
 }
 
-function checkWin(row, col) {
-    return checkDirection(row, col, 1, 0) || // Horizontal
-            checkDirection(row, col, 0, 1) || // Vertical
-            checkDirection(row, col, 1, 1) || // Diagonal \
-            checkDirection(row, col, 1, -1);  // Diagonal /
-}
-
-function checkDirection(row, col, rowInc, colInc) {
-    let count = 0;
-    for (let i = -3; i <= 3; i++) {
-        const r = row + i * rowInc;
-        const c = col + i * colInc;
-        if (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === currentPlayer) {
-            count++;
-            if (count === 4) return true;
-        } else {
-            count = 0;
-        }
-    }
-    return false;
-}
 
 async function createGame(player1, player2) {
     const gameData = {

@@ -14,10 +14,10 @@ def drop_piece(board: List[List[int]], column: int, player_id: int) -> bool:
     Insère un jeton dans la colonne spécifiée pour le joueur donné.
     Renvoie True si le coup a été joué avec succès, False sinon.
     """
-    for row in reversed(board):  # Parcours de bas en haut pour trouver la première ligne libre
-        if row[column] == 0:  # Si la cellule est vide (0)
-            row[column] = player_id  # On place le jeton du joueur
-            return True
+    for row_index in range(len(board) - 1, -1, -1):  # Parcours de bas en haut
+        if board[row_index][column] == 0:  # Si la cellule est vide (0)
+            board[row_index][column] = player_id  # Place le jeton du joueur
+            return row_index  # Retourne le numéro de la ligne où le jeton a été placé
     return False  # Si la colonne est pleine
 
 # Route pour créer une nouvelle partie
@@ -36,22 +36,24 @@ def play_move(game_id: int, column: int, player_id: int):
             if column < 0 or column >= len(game.board[0]):
                 raise HTTPException(status_code=400, detail="Colonne invalide")
             
-            if not drop_piece(game.board, column, player_id):
+            play = drop_piece(game.board, column, player_id)
+            if not play:
                 raise HTTPException(status_code=400, detail="Colonne pleine")
+
 
             # Vérification du gagnant après le coup
             if check_winner(game.board, player_id):
                 game.status = "won"
-                return {"message": f"Player {player_id} wins!", "board": game.board, "status": game.status, "id": game.id}
+                return {"message": f"Player {player_id} wins!", "board": game.board, "status": game.status, "id": game.id, "row" : play}
 
             # Vérification si la partie est un match nul
             if all(row[0] != 0 for row in game.board):  # Si toutes les cases de la première colonne sont remplies
                 game.status = "draw"
-                return {"message": "The game is a draw!", "board": game.board, "status": game.status, "id": game.id}
+                return {"message": "The game is a draw!", "board": game.board, "status": game.status, "id": game.id, "row" : play}
             
             # Passer au tour du joueur suivant
             game.current_turn = 2 if player_id == 1 else 1
-            return {"message": f"Player {player_id} played in column {column}", "board": game.board, "status": game.status}
+            return {"message": f"Player {player_id} played in column {column}", "board": game.board, "status": game.status, "current_turn": game.current_turn, "row" : play}
     
     raise HTTPException(status_code=404, detail="Game not found")
 
