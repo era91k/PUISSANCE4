@@ -285,3 +285,24 @@ body {
     50% { opacity: 0; }
     100% { opacity: 1; }
 }
+
+/* Styles pour le bouton "Rejouer" */
+#buttonContainer {
+    text-align: center;
+    margin-top: 20px; /* Espace au-dessus du bouton */
+    z-index: 1000;
+}
+
+#restartButton {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #ff0000;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#restartButton:hover {
+    background-color: #cc0000;
+}

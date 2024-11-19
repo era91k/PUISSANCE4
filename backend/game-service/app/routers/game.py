@@ -1,9 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Body
 from app.model_game import Game
 from app.utils import check_winner  # Fonction pour vérifier les conditions de victoire
 from typing import List
+from pymongo import MongoClient
+import os
 
 router = APIRouter()
+
+# Configuration de la connexion à MongoDB
+mongo_uri = os.getenv("MONGO_URI", "mongodb://mongo:27017")
+client = MongoClient(mongo_uri)
+db = client["user_db"]  # Assurez-vous d'utiliser la bonne base de données
 
 # Stocker les jeux en mémoire (à remplacer par une base de données plus tard)
 games: List[Game] = []
@@ -18,48 +25,25 @@ def drop_piece(board: List[List[int]], column: int, player_id: int) -> bool:
         if row[column] == 0:  # Si la cellule est vide (0)
             row[column] = player_id  # On place le jeton du joueur
             return True
-    return False  # Si la colonne est pleine
+    return False
 
-# Route pour créer une nouvelle partie
-@router.post("/", response_model=Game)
-def create_game(game: Game):
-    game.status = "active"  # Initialiser le statut à "active"
-    games.append(game)
-    return game
-
-# Route pour jouer un coup
-@router.put("/{game_id}/play")
-def play_move(game_id: int, column: int, player_id: int):
-    # Trouver la partie en fonction de son ID
-    for game in games:
-        if game.id == game_id:
-            if column < 0 or column >= len(game.board[0]):
-                raise HTTPException(status_code=400, detail="Colonne invalide")
-            
-            if not drop_piece(game.board, column, player_id):
-                raise HTTPException(status_code=400, detail="Colonne pleine")
-
-            # Vérification du gagnant après le coup
-            if check_winner(game.board, player_id):
-                game.status = "won"
-                return {"message": f"Player {player_id} wins!", "board": game.board, "status": game.status, "id": game.id}
-
-            # Vérification si la partie est un match nul
-            if all(row[0] != 0 for row in game.board):  # Si toutes les cases de la première colonne sont remplies
-                game.status = "draw"
-                return {"message": "The game is a draw!", "board": game.board, "status": game.status, "id": game.id}
-            
-            # Passer au tour du joueur suivant
-            game.current_turn = 2 if player_id == 1 else 1
-            return {"message": f"Player {player_id} played in column {column}", "board": game.board, "status": game.status}
+# Route pour mettre à jour le score d'un utilisateur
+@router.post("/update_score")
+def update_score(name: str = Body(...), score: int = Body(...)):
+    user_collection = db["users"]
+    user = user_collection.find_one({"name": name})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    raise HTTPException(status_code=404, detail="Game not found")
+    new_score = user.get("score", 0) + score
+    user_collection.update_one({"name": name}, {"$set": {"score": new_score}})
+    return {"name": name, "new_score": new_score}
 
-
-# Route pour récupérer l'état d'une partie
-@router.get("/{game_id}")
-def get_game(game_id: int):
-    for game in games:
-        if game.id == game_id:
-            return game
-    raise HTTPException(status_code=404, detail="Game not found")
+# Route pour récupérer le score d'un utilisateur
+@router.get("/get_score/{name}")
+def get_score(name: str):
+    user_collection = db["users"]
+    user = user_collection.find_one({"name": name})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"name": name, "score": user.get("score", 0)}
