@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPlayer = 1;
     let player1Name = '';
     let player2Name = 'Adversaire';
+    const BASE_URL = "http://127.0.0.1:8000"
 
     const boardElement = document.getElementById('board');
     const messageElement = document.getElementById('message');
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const startButton = document.getElementById('startButton');
     const restartButton = document.getElementById('restartButton');
 
-    startButton.addEventListener('click', () => {
+    startButton.addEventListener('click', async () => {
         player1Name = document.getElementById('player1Name').value;
 
         if (player1Name) {
@@ -20,14 +21,20 @@ document.addEventListener('DOMContentLoaded', function() {
             boardElement.style.display = 'grid';
             messageElement.style.display = 'block';
             restartButton.style.display = 'none';
-            createBoard();
-            messageElement.textContent = `${player1Name} à vous de jouer !`;
+            const gameData = await createGame(player1Name, player2Name);
+            if (gameData) {
+                console.log("Game data:", gameData);
+                createBoard(gameData);
+                messageElement.textContent = `${player1Name} à vous de jouer !`;
+            } else {
+                console.error("Failed to create game");
+            }
         }
     });
 
     restartButton.addEventListener('click', resetGame);
 
-    function resetGame() {
+    async function resetGame() {
         // Réinitialiser le tableau et les éléments
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
@@ -39,40 +46,48 @@ document.addEventListener('DOMContentLoaded', function() {
         boardElement.innerHTML = ''; // Vider le plateau
         confettiElement.innerHTML = ''; // Vider les confettis
         confettiElement.style.display = 'none'; // Cacher les confettis
-        createBoard(); // Recréer le plateau
         boardElement.style.pointerEvents = 'auto'; // Réactiver les clics
         restartButton.style.display = 'none'; // Cacher le bouton rejouer
+
+        // Créer une nouvelle partie
+        const gameData = await createGame(player1Name, player2Name);
+        if (gameData) {
+            createBoard(gameData);
+        } else {
+            console.error("Failed to create game");
+        }
     }
 
-    function createBoard() {
+    async function createBoard(gameData) {
+        console.log("Creating board...");
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
                 cell.dataset.col = c;
-                cell.addEventListener('click', () => handleClick(c));
+                cell.addEventListener('click', () => handleClick(c, gameData));
                 boardElement.appendChild(cell);
             }
         }
+        console.log("Board created");
     }
 
-    function handleClick(col) {
-        for (let r = rows - 1; r >= 0; r--) {
-            if (!board[r][col]) {
-                board[r][col] = currentPlayer;
-                dropPiece(r, col);
-                if (checkWin(r, col)) {
-                    celebrateWin(r, col);
-                } else {
-                    currentPlayer = currentPlayer === 1 ? 2 : 1;
-                    messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} à vous de jouer !`;
-                    if (currentPlayer === 2) {
-                        setTimeout(() => {
-                            handleClick(Math.floor(Math.random() * cols)); // Adversaire fictif joue un coup aléatoire
-                        }, 1000);
-                    }
+    async function handleClick(col, gameData) {
+        const game_state = await playMove(gameData.id, col, currentPlayer);
+        if (game_state) {
+            dropPiece(game_state.row, col);
+            gameData = game_state;
+            if (gameData.status === 'won') {
+                celebrateWin();
+            } else {
+                currentPlayer = gameData.current_turn;
+                messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} à vous de jouer !`;
+                if (currentPlayer === 2) {
+                    setTimeout(() => {
+                        const randomCol = Math.floor(Math.random() * cols);
+                        handleClick(randomCol, gameData); // Adversaire fictif joue un coup aléatoire
+                    }, 1000);
                 }
-                return;
             }
         }
     }
@@ -92,23 +107,112 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function celebrateWin(row, col) {
+    function celebrateWin() {
         messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} a gagné !`;
         boardElement.style.pointerEvents = 'none';
         restartButton.style.display = 'block'; // Afficher le bouton rejouer
-
-        // Récupérer la direction des pièces gagnantes
-        const winPieces = getWinningPieces(row, col);
-        winPieces.forEach(([r, c]) => {
-            const cell = boardElement.children[r * cols + c];
-            cell.classList.add('blink'); // Appliquer le clignotement
-        });
-
         createConfetti();
+    }
 
-        // Mettre à jour le score du gagnant
-        const winnerName = currentPlayer === 1 ? player1Name : player2Name;
-        updateScore(winnerName, 1);
+    function createConfetti() {
+        confettiElement.style.display = 'block';
+        for (let i = 0; i < 100; i++) {
+            const confettiPiece = document.createElement('div');
+            confettiPiece.classList.add('confetti-piece');
+            confettiPiece.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            confettiPiece.style.left = `${Math.random() * 100}%`;
+            confettiPiece.style.animationDelay = `${Math.random() * 2}s`;
+            confettiPiece.style.transform = `translateY(-50px) rotate(${Math.random() * 360}deg)`;
+            confettiElement.appendChild(confettiPiece);
+
+            // Enlever le confetti après animation
+            setTimeout(() => {
+                confettiPiece.remove();
+            }, 3000);
+        }
+    }
+
+    async function createGame(player1, player2) {
+        const gameData = {
+            id: Date.now(),  // Utiliser un ID unique basé sur l'heure actuelle
+            players: [
+                { id: 1, name: player1 },
+                { id: 2, name: player2 }
+            ],
+            current_turn: 1,
+            board: Array.from({ length: 6 }, () => Array(7).fill(0)),  // Plateau vide
+            status: "active"
+        };
+
+        try {
+            const response = await fetch(`${BASE_URL}/game/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(gameData)
+            });
+
+            if (response.ok) {
+                const game = await response.json();  // Attendre le JSON
+                console.log("Game created successfully:", game);
+                return game;  // Retourner l'objet game créé
+            } else {
+                const errorData = await response.json();  // Attendre le JSON des erreurs
+                console.error("Failed to create game:", errorData.detail);  // Accéder au message d'erreur
+                return null;  // Retourner null si la création échoue
+            }
+        } catch (error) {
+            console.error("Error creating game:", error);
+            return null;  // Retourner null en cas d'erreur
+        }
+    }
+
+    async function playMove(gameId, column, playerId) {
+        try {
+            const response = await fetch(`${BASE_URL}/game/${gameId}/play?column=${column}&player_id=${playerId}`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                console.log("Move played successfully!");
+                return await response.json();  // Renvoie l'état mis à jour du jeu
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to play move:", errorData);
+                return null;
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            return null;
+        }
+    }
+
+    function updateScore(name, score) {
+        fetch(`${BASE_URL}/game/update_score`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                score: score
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.detail || "Erreur lors de la mise à jour du score");
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Score mis à jour:', data);
+        })
+        .catch(error => {
+            console.error('Erreur:', error.message);
+        });
     }
 
     function getWinningPieces(row, col) {
@@ -141,24 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return winPieces;
     }
 
-    function createConfetti() {
-        confettiElement.style.display = 'block';
-        for (let i = 0; i < 100; i++) {
-            const confettiPiece = document.createElement('div');
-            confettiPiece.classList.add('confetti-piece');
-            confettiPiece.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-            confettiPiece.style.left = `${Math.random() * 100}%`;
-            confettiPiece.style.animationDelay = `${Math.random() * 2}s`;
-            confettiPiece.style.transform = `translateY(-50px) rotate(${Math.random() * 360}deg)`;
-            confettiElement.appendChild(confettiPiece);
-
-            // Enlever le confetti après animation
-            setTimeout(() => {
-                confettiPiece.remove();
-            }, 3000);
-        }
-    }
-
     function checkWin(row, col) {
         return checkDirection(row, col, 1, 0) || // Horizontal
                 checkDirection(row, col, 0, 1) || // Vertical
@@ -179,32 +265,5 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         return false;
-    }
-
-    function updateScore(name, score) {
-        fetch('http://localhost:8000/game/update_score', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name: name,
-                score: score
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.detail || "Erreur lors de la mise à jour du score");
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Score mis à jour:', data);
-        })
-        .catch(error => {
-            console.error('Erreur:', error.message);
-        });
     }
 });

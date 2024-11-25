@@ -34,6 +34,46 @@ def update_score(name: str = Body(...), score: int = Body(...)):
     user = user_collection.find_one({"name": name})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    for row_index in range(len(board) - 1, -1, -1):  # Parcours de bas en haut
+        if board[row_index][column] == 0:  # Si la cellule est vide (0)
+            board[row_index][column] = player_id  # Place le jeton du joueur
+            return row_index  # Retourne le numéro de la ligne où le jeton a été placé
+    return False  # Si la colonne est pleine
+
+# Route pour créer une nouvelle partie
+@router.post("/", response_model=Game)
+def create_game(game: Game):
+    game.status = "active"  # Initialiser le statut à "active"
+    games.append(game)
+    return game
+
+# Route pour jouer un coup
+@router.put("/{game_id}/play")
+def play_move(game_id: int, column: int, player_id: int):
+    # Trouver la partie en fonction de son ID
+    for game in games:
+        if game.id == game_id:
+            if column < 0 or column >= len(game.board[0]):
+                raise HTTPException(status_code=400, detail="Colonne invalide")
+            
+            play = drop_piece(game.board, column, player_id)
+            if not play:
+                raise HTTPException(status_code=400, detail="Colonne pleine")
+
+
+            # Vérification du gagnant après le coup
+            if check_winner(game.board, player_id):
+                game.status = "won"
+                return {"message": f"Player {player_id} wins!", "board": game.board, "status": game.status, "id": game.id, "row" : play}
+
+            # Vérification si la partie est un match nul
+            if all(row[0] != 0 for row in game.board):  # Si toutes les cases de la première colonne sont remplies
+                game.status = "draw"
+                return {"message": "The game is a draw!", "board": game.board, "status": game.status, "id": game.id, "row" : play}
+            
+            # Passer au tour du joueur suivant
+            game.current_turn = 2 if player_id == 1 else 1
+            return {"message": f"Player {player_id} played in column {column}", "board": game.board, "status": game.status, "current_turn": game.current_turn, "row" : play}
     
     new_score = user.get("score", 0) + score
     user_collection.update_one({"name": name}, {"$set": {"score": new_score}})
