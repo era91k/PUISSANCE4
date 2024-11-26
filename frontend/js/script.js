@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const cols = 7;
     const board = Array.from(Array(rows), () => Array(cols).fill(null));
     let currentPlayer = 1;
-    let player1Name = '';
+    let player1Name = localStorage.getItem('username') || 'NomUtilisateurStocke'; // Récupérer le nom stocké dans le stockage local
     let player2Name = 'Adversaire';
     const BASE_URL = "http://127.0.0.1:8000"
 
@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const confettiElement = document.getElementById('confetti');
     const startButton = document.getElementById('startButton');
     const restartButton = document.getElementById('restartButton');
+
+    // Pré-remplir le champ de saisie du nom avec le nom stocké dans le stockage local
+    document.getElementById('player1Name').value = player1Name;
 
     startButton.addEventListener('click', async () => {
         player1Name = document.getElementById('player1Name').value;
@@ -75,22 +78,20 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleClick(col, gameData) {
         const game_state = await playMove(gameData.id, col, currentPlayer);
         if (game_state) {
-            dropPiece(game_state.row, col);
+            const { row } = game_state; // On suppose que l'API renvoie la ligne jouée
+            board[row][col] = currentPlayer; // Mise à jour du tableau logique
+            dropPiece(row, col);
             gameData = game_state;
-            if (gameData.status === 'won') {
-                celebrateWin();
+    
+            if (checkWin(row, col)) { // Vérifiez la victoire
+                celebrateWin(gameData);
             } else {
                 currentPlayer = gameData.current_turn;
                 messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} à vous de jouer !`;
-                if (currentPlayer === 2) {
-                    setTimeout(() => {
-                        const randomCol = Math.floor(Math.random() * cols);
-                        handleClick(randomCol, gameData); // Adversaire fictif joue un coup aléatoire
-                    }, 1000);
-                }
             }
         }
     }
+    
 
     function dropPiece(row, col) {
         const piece = document.createElement('div');
@@ -107,11 +108,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function celebrateWin() {
-        messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} a gagné !`;
+    function celebrateWin(gameData) {
+        const winnerName = currentPlayer === 1 ? player1Name : player2Name;
+        console.log(`${winnerName} a gagné !`);
+        messageElement.textContent = `${winnerName} a gagné !`;
         boardElement.style.pointerEvents = 'none';
         restartButton.style.display = 'block'; // Afficher le bouton rejouer
         createConfetti();
+    
+        // Mettre à jour le score du gagnant
+        if (winnerName !== 'Adversaire') {
+            updateScore(winnerName, 1);
+        }
     }
 
     function createConfetti() {

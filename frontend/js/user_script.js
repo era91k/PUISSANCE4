@@ -68,6 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             alert('Connexion réussie !');
             console.log('Login successful:', data);
+            // Stocker le nom de l'utilisateur dans le stockage local
+            localStorage.setItem('username', username);
             // Redirect to the game page
             window.location.href = 'index.html';
         })
