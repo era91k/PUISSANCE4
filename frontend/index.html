@@ -16,11 +16,7 @@
         </div>
         <div class="input-container">
             <div class="color-indicator red"></div>
-            <input type="text" id="player1Name" placeholder="Nom du Joueur 1" required />
-        </div>
-        <div class="input-container">
-            <div class="color-indicator yellow"></div>
-            <input type="text" id="player2Name" placeholder="Nom du Joueur 2" required />
+            <input type="text" id="player1Name" placeholder="Nom du Joueur 1" required readonly />
         </div>
         <button id="startButton">Commencer le jeu</button>
     </div>
@@ -29,12 +25,14 @@
         <div id="board" style="display: none;"></div>
         <div id="message" style="display: none;">Joueur 1 (Rouge) à vous de jouer !</div>
         <div class="confetti" id="confetti" style="display: none;"></div>
-        <button id="restartButton" style="display: none; position: absolute;">Rejouer</button>
+    </div>
+    
+    <div id="buttonContainer">
+        <button id="restartButton" style="display: none;">Rejouer</button>
     </div>
     
     <script src="./js/script.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="./js/particles.js"></script>
 </body>
-
 </html>

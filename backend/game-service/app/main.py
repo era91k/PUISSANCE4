@@ -1,22 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import game, player
+from app.routers import game, player
 
-# Créer une instance de FastAPI
 app = FastAPI()
 
-# Configuration des CORS pour permettre les requêtes du frontend
+# Configurer les en-têtes CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permettre toutes les origines (à modifier pour production)
+    allow_origins=["*"],  # Permettre toutes les origines
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Permettre toutes les méthodes
+    allow_headers=["*"],  # Permettre tous les en-têtes
 )
 
-# Inclure les routes des différentes fonctionnalités
-app.include_router(game.router, prefix="/game", tags=["game"])
-app.include_router(player.router, prefix="/player", tags=["player"])
+# Inclure les routes du service de jeu
+app.include_router(game.router, prefix="/game")
+app.include_router(player.router, prefix="/players")
 
 # Route d'accueil
 @app.get("/")
