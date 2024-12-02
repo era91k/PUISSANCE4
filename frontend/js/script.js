@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const rows = 6;
     const cols = 7;
-    const board = Array.from(Array(rows), () => Array(cols).fill(null));
+    const board = Array.from(Array(rows), () => Array(cols).fill(0)); // Utiliser 0 au lieu de null
     let currentPlayer = 1;
     let player1Name = localStorage.getItem('username') || 'NomUtilisateurStocke'; // Récupérer le nom stocké dans le stockage local
-    let player2Name = 'Adversaire';
-    const BASE_URL = "http://127.0.0.1:8000"
+    let player2Name = 'AI';
+    const BASE_URL = "http://127.0.0.1:8000";
+    const AI_URL = "http://127.0.0.1:8003"; // URL du service AI
 
     const boardElement = document.getElementById('board');
     const messageElement = document.getElementById('message');
@@ -41,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Réinitialiser le tableau et les éléments
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                board[r][c] = null;
+                board[r][c] = 0; // Utiliser 0 au lieu de null
             }
         }
         currentPlayer = 1;
@@ -76,22 +77,72 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function handleClick(col, gameData) {
-        const game_state = await playMove(gameData.id, col, currentPlayer);
-        if (game_state) {
-            const { row } = game_state; // On suppose que l'API renvoie la ligne jouée
-            board[row][col] = currentPlayer; // Mise à jour du tableau logique
-            dropPiece(row, col);
-            gameData = game_state;
+        // Play the move and get the updated game state
+        const updatedGameState = await playMove(gameData.id, col, currentPlayer);
     
-            if (checkWin(row, col)) { // Vérifiez la victoire
+        if (updatedGameState) {
+            const { row } = updatedGameState; // The row where the piece landed
+            console.log("Updated Game State:", updatedGameState.id);
+    
+            // Update the logical board state
+            board[row][col] = currentPlayer;
+            
+            // Drop the piece on the UI
+            dropPiece(row, col);
+    
+            // Update gameData to reflect the new game state
+            gameData.current_turn = updatedGameState.current_turn;
+            gameData.board = updatedGameState.board;
+    
+            // Check for a win condition
+            if (checkWin(row, col)) {
                 celebrateWin(gameData);
             } else {
+                // Update the current player message
                 currentPlayer = gameData.current_turn;
                 messageElement.textContent = `${currentPlayer === 1 ? player1Name : player2Name} à vous de jouer !`;
+    
+                // If it's the AI's turn, make the AI move
+                if (currentPlayer === 2 && player2Name === 'AI') {
+                    console.log("Game Data before AI Move:", gameData.id);
+                    const aiMove = await getAIMove(gameData.board);
+                    console.log("AI move column:", aiMove);
+                    boardElement.style.pointerEvents = 'none'; // Désactiver les clics pendant que l'IA joue
+                    // Call handleClick with the AI's move
+                    if (aiMove !== null) {
+                        handleClick(aiMove, gameData); // The AI makes a move
+                    }
+                    boardElement.style.pointerEvents = 'auto'; // Désactiver les clics pendant que l'IA joue
+                }
             }
         }
     }
     
+
+    async function getAIMove(board) {
+        try {
+            console.log("Sending board to AI:", board); // Ajouter un console.log pour vérifier le plateau de jeu
+            const response = await fetch("http://127.0.0.1:8003/ai/move", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(board) // Envoyer directement le tableau
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                return data.column; // Supposons que l'API renvoie la colonne à jouer
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to get AI move:", errorData);
+                return null;
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            return null;
+        }
+    }
 
     function dropPiece(row, col) {
         const piece = document.createElement('div');
@@ -178,6 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function playMove(gameId, column, playerId) {
         try {
+            console.log(`Playing move: gameId=${gameId}, column=${column}, playerId=${playerId}`); // Ajouter un console.log pour vérifier les paramètres
             const response = await fetch(`${BASE_URL}/game/${gameId}/play?column=${column}&player_id=${playerId}`, {
                 method: 'PUT'
             });
@@ -267,7 +319,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const c = col + i * colInc;
             if (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === currentPlayer) {
                 count++;
-                if (count === 4) return true;
+                if (count === 4) {
+                    console.log(`Player ${currentPlayer} wins!`);
+                    return true;
+                }
             } else {
                 count = 0;
             }
