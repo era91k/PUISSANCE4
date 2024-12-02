@@ -16,6 +16,8 @@ body {
     border-radius: 10px;
     z-index: 100;
     position: relative; /* Nécessaire pour le positionnement absolu des pièces */
+    width: 380px;
+    margin: 0 auto;
 }
 .cell {
     width: 50px;
