@@ -104,10 +104,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
                 // If it's the AI's turn, make the AI move
                 if (currentPlayer === 2 && player2Name === 'AI') {
+                    boardElement.style.pointerEvents = 'none'; // Désactiver les clics pendant que l'IA joue
                     console.log("Game Data before AI Move:", gameData.id);
                     const aiMove = await getAIMove(gameData.board);
                     console.log("AI move column:", aiMove);
-                    boardElement.style.pointerEvents = 'none'; // Désactiver les clics pendant que l'IA joue
                     // Call handleClick with the AI's move
                     if (aiMove !== null) {
                         handleClick(aiMove, gameData); // The AI makes a move
