@@ -185,26 +185,63 @@ def play_online_move(gameCode: str, column: int, player_id: int):
 
 @router.put("/online/{gameCode}/reset")
 def reset_online_game(gameCode: str):
+    """
+    Resets the specified online game, flipping who starts next.
+    The VERY FIRST reset sets 'current_turn' to 2.
+    Subsequent resets flip from 2->1 or 1->2.
+    """
     if gameCode not in online_games:
         raise HTTPException(status_code=404, detail="Game not found.")
 
     game = online_games[gameCode]
 
-    # Reset the board
+    # If we haven't stored 'next_start_player', or it's the first reset, default to 2.
+    if "next_start_player" not in game:
+        game["next_start_player"] = 2
+    else:
+        # Flip 1 <--> 2
+        game["next_start_player"] = 1 if game["next_start_player"] == 2 else 2
+
+    # The new starting player for this reset
+    start = game["next_start_player"]
+
+    # Reset board
     game["board"] = [[0]*7 for _ in range(6)]
-    # Remove any existing winner
     if "winner_id" in game:
         del game["winner_id"]
 
-    # Reset status and turn
     game["status"] = "active"
-    game["current_turn"] = 1
+    game["current_turn"] = start
 
     return {
-        "message": "Game reset successfully.",
+        "message": f"Game reset. Player {start} starts now.",
         "board": game["board"],
         "status": game["status"],
-        "current_turn": game["current_turn"]
+        "current_turn": start
     }
 
+@router.post("/online/score")
+def update_online_score(
+    gameCode: str = Body(...),
+    name: str = Body(...),
+    score: int = Body(...)
+):
+    """
+    Increments the specified user's score for an ONLINE game identified by `gameCode`.
+    If the user doesn't exist in the DB, create it with initial score=0 first.
+    """
+    if gameCode not in online_games:
+        raise HTTPException(status_code=404, detail="Game not found.")
 
+    user_collection = db["users"]
+    user = user_collection.find_one({"name": name})
+
+    # If user doesn't exist, create it
+    if not user:
+        user_collection.insert_one({"name": name, "score": 0})
+        user = user_collection.find_one({"name": name})
+
+    new_score = user.get("score", 0) + score
+    user_collection.update_one({"name": name}, {"$set": {"score": new_score}})
+
+    return {"name": name, "new_score": new_score}

@@ -19,14 +19,24 @@ document.addEventListener('DOMContentLoaded', function() {
   const onlinePlayerNameInput = document.getElementById('onlinePlayerName');
   const onlineGameCodeInput = document.getElementById('onlineGameCode');
 
+  let scoreboardElement = document.getElementById('scoreboard');
+  if (!scoreboardElement) {
+    scoreboardElement = document.createElement('div');
+    scoreboardElement.id = "scoreboard";
+    scoreboardElement.style.marginBottom = "10px";
+    scoreboardElement.style.fontWeight = "bold";
+    document.body.prepend(scoreboardElement);
+  }
+
   document.getElementById('player1Name').value = player1Name;
 
   let isOnlineGame = false;
   let onlineGameCode = null;
   let localPlayerId = 1;
   let pollIntervalId = null;
-  let gameOver = false; // Will be true when game is won/draw, reset to false after reset or new game
+  let gameOver = false;
 
+  // Offline Start
   startButton.addEventListener('click', async () => {
       player1Name = document.getElementById('player1Name').value.trim() || 'Joueur1';
       document.getElementById('nameForm').style.display = 'none';
@@ -44,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   restartButton.addEventListener('click', resetGame);
 
+  // CREATE an online game
   createOnlineGameButton.addEventListener('click', async () => {
       const playerName = onlinePlayerNameInput.value.trim();
       const gameCode = onlineGameCodeInput.value.trim();
@@ -74,7 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
               messageElement.textContent = "Vous êtes l'hôte. En attente d'un autre joueur...";
               createBoard({});
               previousBoardState = blankBoard(rows, cols);
+
               pollForOpponent(gameCode);
+              updateOnlineScoreboard();
           } else {
               const err = await response.json();
               alert(err.detail || "Erreur création.");
@@ -84,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   });
 
+  // JOIN an online game
   joinOnlineGameButton.addEventListener('click', async () => {
       const playerName = onlinePlayerNameInput.value.trim();
       const gameCode = onlineGameCodeInput.value.trim();
@@ -113,7 +127,9 @@ document.addEventListener('DOMContentLoaded', function() {
               messageElement.style.display = 'block';
               createBoard({});
               previousBoardState = blankBoard(rows, cols);
+
               loadGameGrid(gameCode);
+              updateOnlineScoreboard();
           } else {
               const err = await response.json();
               alert(err.detail || "Erreur join.");
@@ -123,6 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   });
 
+  //WAIT for Opponent
   function pollForOpponent(gameCode) {
       const intervalId = setInterval(async () => {
           try {
@@ -137,6 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   clearInterval(intervalId);
                   messageElement.textContent = `Le joueur ${player2Name} a rejoint !`;
                   pollForMoves(gameCode);
+
+                  updateOnlineScoreboard();
               }
           } catch (err) {
               console.error("pollForOpponent:", err);
@@ -144,13 +163,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 2000);
   }
 
-  /**
-   * Main polling for an online game
-   * - We do NOT stop polling on 'won' or 'draw', so that if a reset happens,
-   *   we see 'active' again and resume.
-   */
+  //  MAIN ONLINE POLLING
   function pollForMoves(gameCode) {
-    // Clear old polling if any
     if (pollIntervalId) {
       clearInterval(pollIntervalId);
     }
@@ -161,17 +175,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!resp.ok) return;
             const data = await resp.json();
 
-            // Sync names
             if (data.player1) player1Name = data.player1;
             if (data.player2) player2Name = data.player2;
 
-            // Check game status
+            // Check status
             if (data.status === "won") {
-                // Mark gameOver only once
                 if (!gameOver) {
                     gameOver = true;
                     renderOnlineBoard(data);
-                    celebrateWinOnline(data.winner_id, data);
+                    celebrateWinOnline(data.winner_id);
                 }
             } else if (data.status === "draw") {
                 if (!gameOver) {
@@ -182,14 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     restartButton.style.display = "block";
                 }
             } else if (data.status === "active") {
-                // If previously gameOver, but now active => a reset happened
                 if (gameOver) {
                     gameOver = false;
                     boardElement.style.pointerEvents = "auto";
                     restartButton.style.display = "none";
                     messageElement.textContent = "La partie est réinitialisée !";
                 }
-                // Render the new board & set turns
                 renderOnlineBoard(data);
                 updateOnlineTurn(data);
             }
@@ -199,16 +209,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 2000);
   }
 
-  /**
-   * Decide whose turn it is & enable/disable board accordingly.
-   */
+  // DETERMINE WHOSE TURN
   function updateOnlineTurn(data) {
     if (gameOver) {
-      // If the game ended, no one can play
       boardElement.style.pointerEvents = "none";
       return;
     }
-
     if (data.current_turn === localPlayerId) {
         boardElement.style.pointerEvents = "auto";
         messageElement.textContent = "C'est votre tour !";
@@ -219,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // RENDER the Board
   function renderOnlineBoard(data) {
       boardElement.innerHTML = '';
       createCellsForClick();
@@ -248,9 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
       previousBoardState = data.board.map(row => [...row]);
   }
 
-  /**
-   * Single resetOnlineGame function
-   */
+  //RESET an ONLINE GAME
   async function resetOnlineGame(gameCode) {
     try {
         const resp = await fetch(`${BASE_URL}/game/online/${gameCode}/reset`, { method: 'PUT' });
@@ -261,39 +266,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const data = await resp.json();
 
-        // Clear local gameOver so we can continue
         gameOver = false;
-
-        // Clear poll interval
         if (pollIntervalId) {
             clearInterval(pollIntervalId);
         }
-
-        // Immediately reset visuals
         boardElement.innerHTML = '';
         previousBoardState = blankBoard(rows, cols);
         createBoard({});
-        messageElement.textContent = "La partie est réinitialisée ! À vous de jouer.";
+        messageElement.textContent = "La partie est réinitialisée !";
 
-        // Restart polling to see the new empty board & status
         pollForMoves(gameCode);
-
     } catch (error) {
         console.error("resetOnlineGame error:", error);
     }
   }
 
-  /**
-   * Universal reset button
-   * - If online => resetOnlineGame
-   * - Else => normal offline reset
-   */
   async function resetGame() {
       if (isOnlineGame && onlineGameCode) {
         await resetOnlineGame(onlineGameCode);
         return;
       }
-      // Offline reset
+      // offline
       for (let r = 0; r < rows; r++) {
           for (let c = 0; c < cols; c++) {
               board[r][c] = null;
@@ -313,6 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (gd) createBoard(gd);
   }
 
+  // CREATE the Board
   async function createBoard(gameData) {
       boardElement.innerHTML = '';
       createCellsForClick(gameData);
@@ -330,13 +324,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   }
 
-  /**
-   * Clicking on a column -> either do offline or online move
-   */
+  //HANDLE a Click on a Column
   async function handleClick(col, gameData) {
       if (isOnlineGame && onlineGameCode) {
           try {
-              // Double-check it's actually our turn
               const st = await fetch(`${BASE_URL}/game/online/${onlineGameCode}`);
               if (!st.ok) return;
               const currentData = await st.json();
@@ -345,11 +336,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   alert("Pas votre tour!");
                   return;
               }
-              // Make the move
               const moveResult = await playMoveOnline(onlineGameCode, col, localPlayerId);
               if (moveResult) {
-
-                  // ADD: Immediately render the updated board so the last disc is visible
                   const updatedData = {
                       ...currentData,
                       board: moveResult.board
@@ -358,8 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   previousBoardState = updatedData.board.map(row => [...row]);
 
                   if (moveResult.status === 'won') {
-                      // Use moveResult.winner_id to ensure correct winner
-                      setTimeout(() => celebrateWinOnline(moveResult.winner_id, updatedData), 100);
+                      setTimeout(() => celebrateWinOnline(moveResult.winner_id), 100);
                   } else if (moveResult.status === 'draw') {
                       messageElement.textContent = "Match nul !";
                       boardElement.style.pointerEvents = 'none';
@@ -370,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
               console.error("handleClick(online) err:", err);
           }
       } else {
-          // Offline move
+          // offline code
           const st = await playMove(gameData.id, col, currentPlayer);
           if (st) {
               const { row } = st;
@@ -378,6 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
               dropPiece(row, col);
 
               if (st.status === 'won') {
+                  // offline
                   setTimeout(() => celebrateWinOffline(st.player_id), 100);
               } else if (st.status === 'draw') {
                   messageElement.textContent = "Match nul !";
@@ -395,6 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   }
 
+  // ONLINE Move
   async function playMoveOnline(gc, col, pid) {
       try {
           const resp = await fetch(`${BASE_URL}/game/online/${gc}/play?column=${col}&player_id=${pid}`, {
@@ -412,6 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   }
 
+  // ------------- LOAD an Existing Online Game -------------
   async function loadGameGrid(gc) {
       try {
           const r = await fetch(`${BASE_URL}/game/online/${gc}`);
@@ -439,11 +429,14 @@ document.addEventListener('DOMContentLoaded', function() {
           } else {
               pollForMoves(gc);
           }
+
+          updateOnlineScoreboard();
       } catch (er) {
           console.error("loadGameGrid err:", er);
       }
   }
 
+  // DROP a Piece Animation (Offline) -------------
   function dropPiece(row, col) {
       const piece = document.createElement('div');
       piece.classList.add('piece', currentPlayer === 1 ? 'player1' : 'player2');
@@ -459,6 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
+  // WIN OFFLINE
   function celebrateWinOffline(wpid) {
       const winnerName = (wpid === 1) ? player1Name : player2Name;
       messageElement.textContent = `${winnerName} a gagné !`;
@@ -467,32 +461,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
       setTimeout(() => {
           createConfetti();
-          if (winnerName !== 'Joueur2' && winnerName !== 'Adversaire') {
-              updateScore(winnerName, 1);
-          }
       }, 100);
   }
 
-  /**
-   * Online winning scenario – we rely on the server's "winner_id".
-   */
-  function celebrateWinOnline(winnerId, data) {
+  // WIN ONLINE
+  function celebrateWinOnline(winnerId) {
       gameOver = true;
-      // The actual winner:
       const winnerName = (winnerId === 1) ? player1Name : player2Name;
       messageElement.textContent = `${winnerName} a gagné !`;
       boardElement.style.pointerEvents = "none";
       restartButton.style.display = "block";
 
-      // If *we* are the winner, update our score
       if (winnerId === localPlayerId) {
-          setTimeout(() => {
+          setTimeout(async () => {
               createConfetti();
-              updateScore(winnerName, 1);
+              // 1) Increment score in DB
+              await updateOnlineScore(onlineGameCode, winnerName, 1);
+              // 2) Then fetch updated totals
+              await updateOnlineScoreboard();
           }, 100);
+      } else {
+          // If the opponent wins, we just refresh scoreboard after a moment
+          setTimeout(() => updateOnlineScoreboard(), 500);
       }
   }
 
+  // CREATE an OFFLINE game
   async function createGame(p1, p2) {
       const payload = {
           id: Date.now(),
@@ -522,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   }
 
+  // PLAY MOVE OFFLINE
   async function playMove(gameId, column, playerId) {
       try {
           const resp = await fetch(`${BASE_URL}/game/${gameId}/play?column=${column}&player_id=${playerId}`, {
@@ -539,57 +534,58 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   }
 
-  function updateScore(name, sc) {
-      fetch(`${BASE_URL}/game/update_score`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, score: sc })
-      })
-      .then(r => {
-          if (!r.ok) {
-              return r.json().then(d => {
-                  throw new Error(d.detail || "Erreur updateScore");
-              });
+  // Update Score for Online Mode
+  async function updateOnlineScore(gameCode, name, sc) {
+      try {
+          const resp = await fetch(`${BASE_URL}/game/online/score`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ gameCode, name, score: sc })
+          });
+          if (!resp.ok) {
+              const e = await resp.json();
+              console.error("updateOnlineScore error:", e);
+              return null;
           }
-          return r.json();
-      })
-      .then(d => {
-          console.log("Score mis à jour:", d);
-      })
-      .catch(er => {
-          console.error("Erreur:", er);
-      });
+          const data = await resp.json();
+          console.log("Online score updated:", data);
+          return data;
+      } catch (err) {
+          console.error("updateOnlineScore catch:", err);
+          return null;
+      }
+  }
+
+  // REFRESH the Online Scoreboard
+  async function updateOnlineScoreboard() {
+      if (!player1Name || !player2Name) return;
+
+      try {
+          let p1 = 0, p2 = 0;
+
+          // get player1Name
+          const r1 = await fetch(`${BASE_URL}/game/get_score/${player1Name}`);
+          if (r1.ok) {
+              const d1 = await r1.json();
+              p1 = d1.score || 0;
+          }
+
+          // get player2Name
+          const r2 = await fetch(`${BASE_URL}/game/get_score/${player2Name}`);
+          if (r2.ok) {
+              const d2 = await r2.json();
+              p2 = d2.score || 0;
+          }
+
+          scoreboardElement.textContent =
+            `Score: ${player1Name} = ${p1} | ${player2Name} = ${p2}`;
+      } catch (err) {
+          console.error("updateOnlineScoreboard error:", err);
+      }
   }
 
   function blankBoard(r, c) {
       return Array.from({ length: r }, () => Array(c).fill(0));
-  }
-
-  function guessLast(data) {
-      if (data.current_turn === 1) return 2;
-      return 1;
-  }
-
-  function checkWin(row, col) {
-      return checkDirection(row, col, 1, 0) ||
-             checkDirection(row, col, 0, 1) ||
-             checkDirection(row, col, 1, 1) ||
-             checkDirection(row, col, 1, -1);
-  }
-
-  function checkDirection(row, col, rowInc, colInc) {
-      let count = 0;
-      for (let i = -3; i <= 3; i++) {
-          const r = row + i * rowInc;
-          const c = col + i * colInc;
-          if (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === currentPlayer) {
-              count++;
-              if (count === 4) return true;
-          } else {
-              count = 0;
-          }
-      }
-      return false;
   }
 
   function createConfetti() {
