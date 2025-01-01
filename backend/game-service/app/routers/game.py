@@ -182,3 +182,29 @@ def play_online_move(gameCode: str, column: int, player_id: int):
         "row": row_index
     }
 
+
+@router.put("/online/{gameCode}/reset")
+def reset_online_game(gameCode: str):
+    if gameCode not in online_games:
+        raise HTTPException(status_code=404, detail="Game not found.")
+
+    game = online_games[gameCode]
+
+    # Reset the board
+    game["board"] = [[0]*7 for _ in range(6)]
+    # Remove any existing winner
+    if "winner_id" in game:
+        del game["winner_id"]
+
+    # Reset status and turn
+    game["status"] = "active"
+    game["current_turn"] = 1
+
+    return {
+        "message": "Game reset successfully.",
+        "board": game["board"],
+        "status": game["status"],
+        "current_turn": game["current_turn"]
+    }
+
+
