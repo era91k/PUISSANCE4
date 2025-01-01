@@ -101,6 +101,10 @@ def create_online_game(playerName: str = Body(...), gameCode: str = Body(...)):
     if gameCode in online_games:
         raise HTTPException(status_code=400, detail="Game code already exists.")
 
+    # Check for duplicate player names in all online games
+    if any(game["player1"] == playerName or game["player2"] == playerName for game in online_games.values()):
+        raise HTTPException(status_code=400, detail="Player name is already in use.")
+
     online_games[gameCode] = {
         "player1": playerName,
         "player2": None,
@@ -118,6 +122,12 @@ def join_online_game(playerName: str = Body(...), gameCode: str = Body(...)):
     game = online_games[gameCode]
     if game["player2"] is not None:
         raise HTTPException(status_code=400, detail="Game already has two players.")
+
+    # Check for duplicate player names
+    if playerName in [game["player1"], game["player2"]] or any(
+        game["player1"] == playerName or game["player2"] == playerName for game in online_games.values()
+    ):
+        raise HTTPException(status_code=400, detail="Player name is already in use.")
 
     game["player2"] = playerName
     game["status"] = "ready"

@@ -56,88 +56,88 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // CREATE an online game
   createOnlineGameButton.addEventListener('click', async () => {
-      const playerName = onlinePlayerNameInput.value.trim();
-      const gameCode = onlineGameCodeInput.value.trim();
+    const playerName = onlinePlayerNameInput.value.trim();
+    const gameCode = onlineGameCodeInput.value.trim();
 
-      if (!playerName || !gameCode) {
-          alert("Veuillez remplir le nom et le code de la partie.");
-          return;
-      }
+    if (!playerName || !gameCode) {
+        alert("Veuillez remplir le nom et le code de la partie.");
+        return;
+    }
 
-      try {
-          const response = await fetch(`${BASE_URL}/game/online`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ playerName, gameCode })
-          });
+    try {
+        const response = await fetch(`${BASE_URL}/game/online`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName, gameCode })
+        });
 
-          if (response.ok) {
-              alert("Partie en ligne créée ! Attente de l'autre joueur...");
-              isOnlineGame = true;
-              localPlayerId = 1;
-              onlineGameCode = gameCode;
-              player1Name = playerName;
-              player2Name = '';
+        if (response.ok) {
+            alert("Partie en ligne créée ! Attente de l'autre joueur...");
+            isOnlineGame = true;
+            localPlayerId = 1;
+            onlineGameCode = gameCode;
+            player1Name = playerName;
+            player2Name = '';
 
-              document.getElementById('nameForm').style.display = 'none';
-              boardElement.style.display = 'grid';
-              messageElement.style.display = 'block';
-              messageElement.textContent = "Vous êtes l'hôte. En attente d'un autre joueur...";
-              createBoard({});
-              previousBoardState = blankBoard(rows, cols);
+            document.getElementById('nameForm').style.display = 'none';
+            boardElement.style.display = 'grid';
+            messageElement.style.display = 'block';
+            messageElement.textContent = "Vous êtes l'hôte. En attente d'un autre joueur...";
+            createBoard({});
+            previousBoardState = blankBoard(rows, cols);
 
-              pollForOpponent(gameCode);
-              updateOnlineScoreboard();
-          } else {
-              const err = await response.json();
-              alert(err.detail || "Erreur création.");
-          }
-      } catch (err) {
-          console.error("Erreur création online:", err);
-      }
-  });
+            pollForOpponent(gameCode);
+            updateOnlineScoreboard();
+        } else {
+            const err = await response.json();
+            alert(err.detail || "Erreur création.");
+        }
+    } catch (err) {
+        console.error("Erreur création online:", err);
+    }
+});
 
-  // JOIN an online game
-  joinOnlineGameButton.addEventListener('click', async () => {
-      const playerName = onlinePlayerNameInput.value.trim();
-      const gameCode = onlineGameCodeInput.value.trim();
+joinOnlineGameButton.addEventListener('click', async () => {
+    const playerName = onlinePlayerNameInput.value.trim();
+    const gameCode = onlineGameCodeInput.value.trim();
 
-      if (!playerName || !gameCode) {
-          alert("Veuillez remplir le nom et le code.");
-          return;
-      }
+    if (!playerName || !gameCode) {
+        alert("Veuillez remplir le nom et le code.");
+        return;
+    }
 
-      try {
-          const response = await fetch(`${BASE_URL}/game/online/join`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ playerName, gameCode })
-          });
+    try {
+        const response = await fetch(`${BASE_URL}/game/online/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName, gameCode })
+        });
 
-          if (response.ok) {
-              const data = await response.json();
-              alert("Partie rejointe : " + data.message);
-              isOnlineGame = true;
-              localPlayerId = 2;
-              onlineGameCode = gameCode;
-              player2Name = playerName;
+        if (response.ok) {
+            const data = await response.json();
+            alert("Partie rejointe : " + data.message);
+            isOnlineGame = true;
+            localPlayerId = 2;
+            onlineGameCode = gameCode;
+            player2Name = playerName;
 
-              document.getElementById('nameForm').style.display = 'none';
-              boardElement.style.display = 'grid';
-              messageElement.style.display = 'block';
-              createBoard({});
-              previousBoardState = blankBoard(rows, cols);
+            document.getElementById('nameForm').style.display = 'none';
+            boardElement.style.display = 'grid';
+            messageElement.style.display = 'block';
+            createBoard({});
+            previousBoardState = blankBoard(rows, cols);
 
-              loadGameGrid(gameCode);
-              updateOnlineScoreboard();
-          } else {
-              const err = await response.json();
-              alert(err.detail || "Erreur join.");
-          }
-      } catch (err) {
-          console.error("Erreur joinOnlineGame:", err);
-      }
-  });
+            loadGameGrid(gameCode);
+            updateOnlineScoreboard();
+        } else {
+            const err = await response.json();
+            alert(err.detail || "Erreur join.");
+        }
+    } catch (err) {
+        console.error("Erreur joinOnlineGame:", err);
+    }
+});
+
 
   //WAIT for Opponent
   function pollForOpponent(gameCode) {
