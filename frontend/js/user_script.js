@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Stocker le nom de l'utilisateur dans le stockage local
             localStorage.setItem('username', username);
             // Redirect to the game page
-            window.location.href = 'index.html';
+            window.location.href = 'menu.html';
         })
         .catch(error => {
             console.error('Erreur:', error.message);

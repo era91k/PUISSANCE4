@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau des Scores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .scoreboard {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .scoreboard h1 {
+            margin-bottom: 20px;
+        }
+
+        .scoreboard table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .scoreboard th,
+        .scoreboard td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .scoreboard th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .scoreboard tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #menuButton {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            margin-top: 20px;
+            /* Espace au-dessus du bouton */
+        }
+
+        #menuButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scoreboard">
+        <h1>Tableau des Scores</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom d'utilisateur</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="scoreboardBody">
+                <!-- Les scores des utilisateurs seront insérés ici -->
+            </tbody>
+        </table>
+        <button id="menuButton" onclick="location.href='menu.html'">Retour au Menu</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                const response = await fetch('http://127.0.0.1:8002/users/scores');
+                if (response.ok) {
+                    const users = await response.json();
+                    const scoreboardBody = document.getElementById('scoreboardBody');
+                    users.sort((a, b) => b.score - a.score); // Trier les utilisateurs par score décroissant
+                    users.forEach(user => {
+                        const row = document.createElement('tr');
+                        const nameCell = document.createElement('td');
+                        const scoreCell = document.createElement('td');
+                        nameCell.textContent = user.name;
+                        scoreCell.textContent = user.score;
+                        row.appendChild(nameCell);
+                        row.appendChild(scoreCell);
+                        scoreboardBody.appendChild(row);
+                    });
+                } else {
+                    console.error('Failed to fetch scores');
+                }
+            } catch (error) {
+                console.error('Error fetching scores:', error);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -17,6 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Pré-remplir le champ de saisie du nom avec le nom stocké dans le stockage local
     document.getElementById('player1Name').value = player1Name;
 
+    // Récupérer le niveau de difficulté à partir de l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const difficulty = urlParams.get('difficulty') || 'medium';
+
     startButton.addEventListener('click', async () => {
         player1Name = document.getElementById('player1Name').value;
 
@@ -112,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (aiMove !== null) {
                         handleClick(aiMove, gameData); // The AI makes a move
                     }
-                    boardElement.style.pointerEvents = 'auto'; // Désactiver les clics pendant que l'IA joue
+                    boardElement.style.pointerEvents = 'auto'; // Réactiver les clics après le coup de l'IA
                 }
             }
         }
@@ -122,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function getAIMove(board) {
         try {
             console.log("Sending board to AI:", board); // Ajouter un console.log pour vérifier le plateau de jeu
-            const response = await fetch("http://127.0.0.1:8003/ai/move", {
+            const response = await fetch(`http://127.0.0.1:8003/ai/move?difficulty=${difficulty}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -168,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
         createConfetti();
     
         // Mettre à jour le score du gagnant
-        if (winnerName !== 'Adversaire') {
+        if (winnerName !== 'AI') {
             updateScore(winnerName, 1);
         }
     }

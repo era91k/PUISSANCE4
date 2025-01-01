@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Query
 from typing import List, Tuple
 import time
 import math
 import random
+
 router = APIRouter()
 
 # Constants for players
@@ -175,18 +176,33 @@ def minimax(board: List[List[int]], depth: int, alpha: float, beta: float, maxim
         return best_col, value
 
 @router.post("/move")
-def get_ai_move(board: List[List[int]] = Body(...)):
+def get_ai_move(board: List[List[int]] = Body(...), difficulty: str = Query("medium")):
     """
-    AI endpoint using Minimax algorithm.
+    AI endpoint using Minimax algorithm with difficulty levels.
     """
     start_time = time.time()
     valid_columns = get_valid_columns(board)
     if not valid_columns:
         raise HTTPException(status_code=400, detail="No valid moves available")
     
-    col, _ = minimax(board, depth=4, alpha=-math.inf, beta=math.inf, maximizingPlayer=True)
+    # Set depth based on difficulty
+    if difficulty == "easy":
+        depth = 1  # Réduire la profondeur à 1 pour rendre l'IA moins performante
+    elif difficulty == "medium":
+        depth = 4
+    elif difficulty == "hard":
+        depth = 6
+    else:
+        raise HTTPException(status_code=400, detail="Invalid difficulty level")
+
+    # Introduire un élément de hasard en mode facile
+    if difficulty == "easy" and random.random() < 0.5:
+        col = random.choice(valid_columns)
+    else:
+        col, _ = minimax(board, depth=depth, alpha=-math.inf, beta=math.inf, maximizingPlayer=True)
+    
     end_time = time.time()
 
-    print(f"AI selected column {col} in {end_time - start_time:.2f}s")
-    time.sleep(2)  # Simulate AI thinking time
+    print(f"AI selected column {col} in {end_time - start_time:.2f}s with difficulty {difficulty}")
+    time.sleep(1)  # Simulate AI thinking time
     return {"column": col}
