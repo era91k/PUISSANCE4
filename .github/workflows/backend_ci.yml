@@ -31,14 +31,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest --cov-report=xml
-    - name: Create comment
-      uses: peter-evans/create-or-update-comment@v4
-      with:
-        issue-number: 1
-        body: |
-          This is a multi-line test comment
-          - With GitHub **Markdown** :sparkles:
-          - Created by [create-or-update-comment][1]
-
-          [1]: https://github.com/peter-evans/create-or-update-comment
-        reactions: '+1'
+    - name: Check coverage for PR changes
+      run: |
+        diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }} --fail-under=60
