@@ -2,7 +2,7 @@ from fastapi import HTTPException
 import pytest
 from unittest.mock import patch, MagicMock
 from app.model_player import Player
-from app.routers.game import create_game, drop_piece, get_score, play_move, update_score
+from app.routers.game import *
 from app.model_game import Game
 
 def test_drop_piece_ok():
@@ -211,3 +211,85 @@ def test_get_score_user_not_found(mock_db):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "User not found"
+
+@patch("app.routers.game.db")
+def test_get_score_existing_user(mock_db):
+    mock_user_collection = MagicMock()
+    mock_db.__getitem__.return_value = mock_user_collection
+    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
+
+    result = get_score(name="Alice")
+
+    assert result == {"name": "Alice", "score": 10}
+    mock_user_collection.find_one.assert_called_with({"name": "Alice"})
+
+
+@patch("app.routers.game.online_games", new_callable=dict)
+def test_create_online_game(mock_online_games):
+    result = create_online_game(playerName="Alice", gameCode="GAME123")
+
+    assert result == {"message": "Online game created successfully."}
+    assert "GAME123" in mock_online_games
+    assert mock_online_games["GAME123"]["player1"] == "Alice"
+    assert mock_online_games["GAME123"]["status"] == "waiting"
+
+
+
+@patch("app.routers.game.online_games", {"GAME123": {"player1": "Alice", "player2": None}})
+def test_join_online_game():
+    result = join_online_game(playerName="Bob", gameCode="GAME123")
+
+    assert result["message"] == "Joined game successfully."
+    assert result["game"]["player2"] == "Bob"
+    assert result["game"]["status"] == "ready"
+
+#game have already 2 players
+@patch("app.routers.game.online_games", {"GAME123": {"player1": "Alice", "player2": "Bob", "status": "ready"}})
+def test_join_online_game_full():
+    with pytest.raises(HTTPException) as exc_info:
+        join_online_game(playerName="Charlie", gameCode="GAME123")
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Game already has two players."
+
+
+@patch("app.routers.game.online_games", {"GAME123": {"player1": "Alice", "player2": "Bob", "board": [[0]*7 for _ in range(6)], "current_turn": 1, "status": "active"}})
+@patch("app.routers.game.drop_piece")
+@patch("app.routers.game.check_winner")
+def test_play_online_move(mock_check_winner, mock_drop_piece):
+    mock_drop_piece.return_value = 5
+    mock_check_winner.return_value = False
+
+    result = play_online_move(gameCode="GAME123", column=3, player_id=1)
+
+    assert result["message"] == "Player 1 played in column 3"
+    assert result["status"] == "active"
+    assert result["current_turn"] == 2
+
+
+@patch("app.routers.game.online_games", {"GAME123": {"player1": "Alice", "player2": "Bob", "status": "won", "current_turn": 1}})
+def test_reset_online_game():
+    result = reset_online_game(gameCode="GAME123")
+
+    assert result["message"] == "Game reset. Player 2 starts now."
+    assert result["status"] == "active"
+    assert result["current_turn"] == 2
+    assert result["board"] == [[0]*7 for _ in range(6)]
+
+
+@patch("app.routers.game.db")
+@patch("app.routers.game.online_games", {"GAME123": {}})
+def test_update_online_score(mock_db):
+    mock_user_collection = MagicMock()
+    mock_db.__getitem__.return_value = mock_user_collection
+    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
+
+    result = update_online_score(gameCode="GAME123", name="Alice", score=5)
+
+    assert result == {"name": "Alice", "new_score": 15}
+    mock_user_collection.update_one.assert_called_with({"name": "Alice"}, {"$set": {"score": 15}})
+
+
+
+
+
