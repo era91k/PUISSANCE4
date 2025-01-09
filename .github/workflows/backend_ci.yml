@@ -1,26 +1,29 @@
-name: CI on pull request
+name: CI
 
 on:
   pull_request:
     branches: 
       - '*'
+  push:
+    branches:
+      - 'main'
+      - 'frontback'
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Récupère tout l'historique pour permettre la comparaison
-        ref: ${{ github.head_ref }}  # Checkout de la branche source de la PR
+        fetch-depth: 0
+        ref: ${{ github.head_ref || github.ref_name }}
 
-    - name: Fetch target branch
+    - name: Fetch target branch of PR
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         git fetch origin ${{ github.base_ref }}  # Récupère la branche cible de la PR
 
@@ -41,5 +44,6 @@ jobs:
         pytest --cov-report=xml
 
     - name: Check coverage for PR changes
+      if: ${{ github.event_name == 'pull_request' }}
       run: |
         diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }} --fail-under=60
