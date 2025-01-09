@@ -37,4 +37,4 @@ jobs:
       with:
         min-coverage-percentage: '60'
         fail-under-coverage-percentage: 'true'
-        cobertura-path: ./coverage.xml
+        cobertura-path: coverage.xml
