@@ -18,3 +18,5 @@ venv/
 
 #Ignorer les fichiers liés a JS
 **/node_modules/
+
+.coverage
