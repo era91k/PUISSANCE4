@@ -10,7 +10,7 @@ app.use(express.static(path.join(__dirname)));
 
 // Point d'entrée pour la page d'accueil
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'user.html'));
 });
 
 // Démarrer le serveur

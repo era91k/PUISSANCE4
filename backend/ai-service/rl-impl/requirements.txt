@@ -1,0 +1,7 @@
+gym
+stable-baselines3
+torch
+gymnasium
+shimmy
+matplotlib
+pandas

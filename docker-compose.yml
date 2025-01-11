@@ -15,6 +15,11 @@ services:
     depends_on:
       - mongo
 
+  ai-service:
+    build: ./backend/ai-service
+    ports:
+      - "8003:8003"
+
   mongo:
     image: mongo:latest
     ports:
@@ -29,6 +34,7 @@ services:
     depends_on:
       - game-service
       - user-service
+      - ai-service
 
 volumes:
   mongo-data:

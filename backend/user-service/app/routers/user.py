@@ -5,8 +5,27 @@ from pymongo import MongoClient
 from passlib.context import CryptContext
 import os
 import logging
-from typing import List
-from app.model_user import UserCreate, UserResponse
+from typing import List, Optional
+from bson import ObjectId
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str  # Plain password to be hashed
+    score: int = 0  # Default score is 0
+
+class UserResponse(BaseModel):
+    _id: Optional[str] = Field(None, alias="_id")  # MongoDB ObjectId, alias to handle _id correctly
+    name: str
+    email: str
+    hashed_password: Optional[str] = None  # Only for internal use, don't send in the response
+    score: int
+
+    class Config:
+        json_encoders = {
+            ObjectId: str  # Convert ObjectId to string for serialization
+        }
+        arbitrary_types_allowed = True  # Allow ObjectId to be used directly
 
 router = APIRouter()
 
@@ -83,3 +102,27 @@ def login_user(
         return {"success": True, "message": "Login successful!"}
     logger.error("Invalid username or password")
     raise HTTPException(status_code=400, detail="Invalid username or password")
+
+# Route to get the score of a user
+@router.get("/users/{name}/score", response_model=int)
+def get_user_score(name: str, user_collection=Depends(get_user_collection)):
+    logger.info(f"Request received to get score for user {name}")
+    user = user_collection.find_one({"name": name})
+    if user:
+        return user["score"]
+    else:
+        logger.error(f"User {name} not found")
+        raise HTTPException(status_code=404, detail="User not found")
+
+# Route to get all users' scores
+@router.get("/users/scores", response_model=List[UserResponse])
+def get_all_scores(user_collection=Depends(get_user_collection)):
+    logger.info("Request received to get all users' scores")
+    users = list(user_collection.find({}, {"name": 1, "email": 1, "score": 1}))
+    
+    # Convert ObjectId to string for all users
+    for user in users:
+        user["_id"] = str(user["_id"])  # Convert ObjectId to string
+    
+    logger.info(f"Retrieved scores for {len(users)} users")
+    return users

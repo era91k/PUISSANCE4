@@ -11,7 +11,7 @@
   <div id="form-container" class="red-bg">
 
     <h1>PUISSANCE 4</h1>
-    <form id="connexion-form">
+    <form id="login-form">
       <h1>Connexion</h1>
       <div class="input-container">
         <input type="text" placeholder="Nom d'utilisateur" id="login-username" name="login-username" required>
@@ -25,7 +25,7 @@
       </p>
     </form>
 
-    <form id="inscription-form" class="hidden">
+    <form id="create-account-form" class="hidden">
       <h1>Inscription</h1>
       <div class="input-container">
         <input type="text" placeholder="Nom d'utilisateur" id="username" name="username" required>
@@ -42,7 +42,7 @@
       </p>
     </form>
   </div>
-  <script src="script.js"></script>
+  <script src="js/user_script.js"></script>
 </body>
 </html>
 
@@ -179,16 +179,16 @@ input::placeholder {
 <script>
     document.getElementById("show-inscription").addEventListener("click", function (e) {
   e.preventDefault();
-  document.getElementById("connexion-form").classList.add("hidden");
-  document.getElementById("inscription-form").classList.remove("hidden");
+  document.getElementById("login-form").classList.add("hidden");
+  document.getElementById("create-account-form").classList.remove("hidden");
   document.getElementById("form-container").classList.remove("red-bg");
   document.getElementById("form-container").classList.add("yellow-bg");
 });
 
 document.getElementById("show-connexion").addEventListener("click", function (e) {
   e.preventDefault();
-  document.getElementById("inscription-form").classList.add("hidden");
-  document.getElementById("connexion-form").classList.remove("hidden");
+  document.getElementById("create-account-form").classList.add("hidden");
+  document.getElementById("login-form").classList.remove("hidden");
   document.getElementById("form-container").classList.remove("yellow-bg");
   document.getElementById("form-container").classList.add("red-bg");
 });

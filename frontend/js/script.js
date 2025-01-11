@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const rows = 6;
     const cols = 7;
-    const board = Array.from(Array(rows), () => Array(cols).fill(null));
+    const board = Array.from(Array(rows), () => Array(cols).fill(0));
     let previousBoardState = Array.from({ length: rows }, () => Array(cols).fill(0));
   
     let currentPlayer = 1;
@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const confettiElement = document.getElementById('confetti');
     const startButton = document.getElementById('startButton');
     const restartButton = document.getElementById('restartButton');
+    const aiButtons = document.querySelectorAll('.ai-btn');
     const createOnlineGameButton = document.getElementById('createOnlineGameButton');
     const joinOnlineGameButton = document.getElementById('joinOnlineGameButton');
     const onlinePlayerNameInput = document.getElementById('onlinePlayerName');
@@ -38,6 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let localPlayerId = 1;
     let pollIntervalId = null;
     let gameOver = false;
+    game_difficulty = null;
+    aiGame = false;
   
   
   const backgroundMusic = new Audio('js/fond-sonore4.mp3'); 
@@ -50,7 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
   document.addEventListener('click', () => {
       backgroundMusic.play();
   }, { once: true });
-  
   
   
     // Offline Start
@@ -67,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isOnlineGame = false;
   
         const gameData = await createGame(player1Name, player2Name);
+        console.log("Game Data:", gameData);
         if (gameData) {
             createBoard(gameData);
             messageElement.textContent = `${player1Name}, c'est votre tour !`;
@@ -74,6 +77,58 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   
     restartButton.addEventListener('click', resetGame);
+
+      // AI Game
+    aiButtons.forEach(button => {
+        button.addEventListener('click', async function(){
+            console.log("AI Button clicked:", button);
+            aiGame = true;
+            game_difficulty = button.dataset.difficulty;
+            player1Name = 'Joueur 1'
+            player2Name = 'IA'
+            document.getElementById("player1NameDisplay").textContent = player1Name;
+            document.getElementById("player2NameDisplay").textContent = player2Name;
+
+            document.getElementById('nameForm').style.display = 'none';
+            boardElement.style.display = 'grid';
+            messageElement.style.display = 'block';
+
+            isOnlineGame = false;
+            const gameData = await createGame(player1Name, player2Name);
+            if (gameData) {
+                console.log("Game data:", gameData);
+                createBoard(gameData);
+                messageElement.textContent = `${player1Name} à vous de jouer !`;
+            } else {
+                console.error("Failed to create game");
+            }
+        });
+    });
+
+    async function getAIMove(board) {
+        try {
+            console.log("Sending board to AI:", board); // Ajouter un console.log pour vérifier le plateau de jeu
+            const response = await fetch(`http://127.0.0.1:8003/ai/move?difficulty=${game_difficulty}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(board) // Envoyer directement le tableau
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                return data.column; // Supposons que l'API renvoie la colonne à jouer
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to get AI move:", errorData);
+                return null;
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            return null;
+        }
+    }
   
     // CREATE an online game
     createOnlineGameButton.addEventListener('click', async () => {
@@ -414,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (err) {
                 console.error("handleClick(online) err:", err);
             }
-        } else {
+        } else if (!isOnlineGame && !aiGame) {
             // offline code
             const st = await playMove(gameData.id, col, currentPlayer);
             if (st) {
@@ -435,6 +490,40 @@ document.addEventListener('DOMContentLoaded', function() {
                         messageElement.textContent = "C'est votre tour !";
                     } else {
                         messageElement.textContent = "C'est au tour de l'adversaire !";
+                    }
+                }
+            }
+        } else if (aiGame) {
+            const st = await playMove(gameData.id, col, currentPlayer);
+            if (st) {
+                const { row } = st;
+                board[row][col] = currentPlayer;
+                dropPiece(row, col);
+                
+                gameData.current_turn = st.current_turn;
+                gameData.board = st.board;
+                if (st.status === 'won') {
+                    // offline
+                    setTimeout(() => celebrateWinOffline(st.player_id), 100);
+                } else if (st.status === 'draw') {
+                    messageElement.textContent = "Match nul !";
+                    boardElement.style.pointerEvents = 'none';
+                    restartButton.style.display = 'block';
+                } else {
+                    currentPlayer = st.current_turn;
+                    if (currentPlayer === 1) {
+                        messageElement.textContent = "C'est votre tour !";
+                    } else {
+                        messageElement.textContent = "C'est au tour de l'IA !";
+                        boardElement.style.pointerEvents = 'none'; // Désactiver les clics pendant que l'IA joue
+                        console.log("Game Data before AI Move:", gameData.id);
+                        const aiMove = await getAIMove(gameData.board);
+                        console.log("AI move column:", aiMove);
+                        // Call handleClick with the AI's move
+                        if (aiMove !== null) {
+                            handleClick(aiMove, gameData); // The AI makes a move
+                        }
+                        boardElement.style.pointerEvents = 'auto'; // Réactiver les clics après le coup de l'IA
                     }
                 }
             }
@@ -815,7 +904,3 @@ window.placePiece = async function(column) {
 };
 
 });
-  
-
-  
-  
