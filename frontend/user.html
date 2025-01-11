@@ -179,16 +179,16 @@ input::placeholder {
 <script>
     document.getElementById("show-inscription").addEventListener("click", function (e) {
   e.preventDefault();
-  document.getElementById("connexion-form").classList.add("hidden");
-  document.getElementById("inscription-form").classList.remove("hidden");
+  document.getElementById("login-form").classList.add("hidden");
+  document.getElementById("create-account-form").classList.remove("hidden");
   document.getElementById("form-container").classList.remove("red-bg");
   document.getElementById("form-container").classList.add("yellow-bg");
 });
 
 document.getElementById("show-connexion").addEventListener("click", function (e) {
   e.preventDefault();
-  document.getElementById("inscription-form").classList.add("hidden");
-  document.getElementById("connexion-form").classList.remove("hidden");
+  document.getElementById("create-account-form").classList.add("hidden");
+  document.getElementById("login-form").classList.remove("hidden");
   document.getElementById("form-container").classList.remove("yellow-bg");
   document.getElementById("form-container").classList.add("red-bg");
 });
