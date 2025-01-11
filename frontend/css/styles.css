@@ -8,7 +8,6 @@ body {
   font-family: Arial, sans-serif;
   overflow: hidden;
   background-color: rgb(232 230 226); 
-  
 }
 
 #nameForm{
@@ -86,6 +85,23 @@ input::placeholder {
     width: 25px;
     height: 20px;
     border-radius: 100%;
+}
+
+#logoutButton {
+    background: none;
+    border: none;
+    right: 10px;
+    position: absolute;
+    top: 10px;
+    cursor: pointer;
+}
+
+.fa-right-from-bracket{
+  color: #dbdad6;
+}
+
+#logoutButton:hover .fa-right-from-bracket{
+  color: #bdbcb7;
 }
 
 #nameForm, #board, #message {

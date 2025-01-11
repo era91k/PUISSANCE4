@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let previousBoardState = Array.from({ length: rows }, () => Array(cols).fill(0));
   
     let currentPlayer = 1;
+    const username = localStorage.getItem('username') || 'N/A';
+    document.getElementById('player1Name').value = `${username}`;
+    document.getElementById('onlinePlayerName').value = `${username}`;
     let player1Name = document.getElementById('player1Name') || 'Joueur1';
     let player2Name = document.getElementById('player2Name') ||'Joueur2';
     let player1Score = 0;
@@ -922,4 +925,11 @@ menuButton.addEventListener('click', async () => {
     menuButton.style.display = 'none';
 });
 
+
+document.getElementById('logoutButton').addEventListener('click', function() {
+    localStorage.removeItem('username');
+    localStorage.removeItem('score');
+    window.location.href = 'user.html';
+});
+  
 });
