@@ -37,7 +37,7 @@
    Si vous n’avez pas encore cloné le dépôt, exécutez la commande suivante :
    ```bash
    git clone https://github.com/Marwane-20/PUISSANCE4.git
-   cd puissance4
+   cd PUISSANCE4
    ```
 
 2. **Construire l'Image Docker** :
