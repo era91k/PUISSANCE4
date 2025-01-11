@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let previousBoardState = Array.from({ length: rows }, () => Array(cols).fill(0));
   
     let currentPlayer = 1;
+    const username = localStorage.getItem('username') || 'N/A';
+    document.getElementById('player1Name').value = `${username}`;
+    document.getElementById('onlinePlayerName').value = `${username}`;
     let player1Name = document.getElementById('player1Name') || 'Joueur1';
     let player2Name = document.getElementById('player2Name') ||'Joueur2';
     let player1Score = 0;
@@ -17,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const confettiElement = document.getElementById('confetti');
     const startButton = document.getElementById('startButton');
     const restartButton = document.getElementById('restartButton');
+    const menuButton = document.getElementById('menuButton');
     const aiButtons = document.querySelectorAll('.ai-btn');
     const createOnlineGameButton = document.getElementById('createOnlineGameButton');
     const joinOnlineGameButton = document.getElementById('joinOnlineGameButton');
@@ -66,6 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
         boardElement.style.display = 'grid';
         messageElement.style.display = 'block';
         restartButton.style.display = 'none';
+        menuButton.style.display = 'none';
         isOnlineGame = false;
   
         const gameData = await createGame(player1Name, player2Name);
@@ -271,12 +276,14 @@ document.addEventListener('DOMContentLoaded', function() {
                       messageElement.textContent = "Match nul !";
                       boardElement.style.pointerEvents = "none";
                       restartButton.style.display = "block";
+                      menuButton.style.display = "block";
                   }
               } else if (data.status === "active") {
                   if (gameOver) {
                       gameOver = false;
                       boardElement.style.pointerEvents = "auto";
                       restartButton.style.display = "none";
+                      menuButton.style.display = "none";
                       messageElement.textContent = "La partie est réinitialisée !";
                   }
   
@@ -390,6 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
         confettiElement.style.display = 'none';
         boardElement.style.pointerEvents = 'auto';
         restartButton.style.display = 'none';
+        menuButton.style.display = 'none';
   
         previousBoardState = blankBoard(rows, cols);
   
@@ -464,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         messageElement.textContent = "Match nul !";
                         boardElement.style.pointerEvents = 'none';
                         restartButton.style.display = 'block';
+                        menuButton.style.display = 'block';
                     }
                 }
             } catch (err) {
@@ -484,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageElement.textContent = "Match nul !";
                     boardElement.style.pointerEvents = 'none';
                     restartButton.style.display = 'block';
+                    menuButton.style.display = 'block';
                 } else {
                     currentPlayer = st.current_turn;
                     if (currentPlayer === 1) {
@@ -509,6 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageElement.textContent = "Match nul !";
                     boardElement.style.pointerEvents = 'none';
                     restartButton.style.display = 'block';
+                    menuButton.style.display = 'block';
                 } else {
                     currentPlayer = st.current_turn;
                     if (currentPlayer === 1) {
@@ -610,6 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
       messageElement.textContent = `${winnerName} a gagné !`;
       boardElement.style.pointerEvents = 'none';
       restartButton.style.display = 'block';
+      menuButton.style.display = 'block';
   
       document.getElementById("player1NameDisplay").textContent = player1Name;
       document.getElementById("player2NameDisplay").textContent = player2Name;
@@ -651,6 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
         messageElement.textContent = `${winnerName} a gagné !`;
         boardElement.style.pointerEvents = "none";
         restartButton.style.display = "block";
+        menuButton.style.display = 'block';
     
         // Jouer les sons de victoire
         winSound.play().catch((error) => console.error("Impossible de lire le son de victoire :", error));
@@ -903,4 +916,19 @@ window.placePiece = async function(column) {
     }
 };
 
+menuButton.addEventListener('click', async () => {
+    document.getElementById('nameForm').style.display = 'block';
+    boardElement.style.display = 'none';
+    boardElement.style.pointerEvents = 'auto';
+    messageElement.style.display = 'none';
+    restartButton.style.display = 'none';
+    menuButton.style.display = 'none';
+});
+
+document.getElementById('logoutButton').addEventListener('click', function() {
+    localStorage.removeItem('username');
+    localStorage.removeItem('score');
+    window.location.href = 'user.html';
+});
+  
 });
