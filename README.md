@@ -22,3 +22,19 @@
 - Enregistrer les statistiques de jeu des utilisateurs (nombre de parties jouées, gagnées, etc.).
 - Adopter une architecture micro-services
 
+## **FrontBack**
+
+Étape 1 : Construire l'Image Docker
+```
+docker-compose build
+```
+Étape 2 : Démarrer le Conteneur Docker
+```
+docker-compose up
+```
+Étape 3 : Accéder à la Documentation
+
+Swagger UI : http://localhost:8000/docs
+ReDoc : http://localhost:8000/redoc
+
+Pour tester : exécution du script cli.py
