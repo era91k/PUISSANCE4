@@ -4,7 +4,7 @@
 
 ![puissance4-interface](https://cdn.discordapp.com/attachments/683698523748827145/1327786485180534918/image.png?ex=67845507&is=67830387&hm=8d8b9c450c1b6c3d08f4611afbc591e144b7edfc9466b1f9c42aa8d4d154441b&)
 
-## **Membres de l'Équipe**
+## **👥 Membres de l'Équipe**
 - **Rachad Marwane**  
 - **Lekouara Abdelrafik**  
 - **Antunes Mendes Alexandre**  
@@ -13,7 +13,7 @@
 - **Gomes Nicolas**  
 - **Andriandalaoarivony Era**  
 
-## **Objectifs du Projet**
+## **🚀 Objectifs du Projet**
 ### L'objectif principal de ce projet est de créer un jeu de Puissance 4 avec plusieurs fonctionnalités :
 - Mode Local : Permet aux joueurs de jouer contre un autre joueur sur le même appareil.
 - Mode en Ligne : Permet aux joueurs de créer/rejoindre une partie et de jouer contre d'autres utilisateurs en ligne.
@@ -24,7 +24,7 @@
 - Intégration Continue : Mise en place d'un pipeline CI avec des tests unitaires pour garantir la qualité et la fiabilité du code.
 - Conteneurisation : Utilisation de conteneurs pour isoler et simplifier le déploiement des services.
 
-## **Installation et Exécution**
+## **📝 Installation et Exécution**
 
 ### **Pré-requis** :
 - Docker et Docker Compose installés sur votre machine.
@@ -68,10 +68,10 @@ Cela va démarrer les services suivants :
 
 Ces adresses vous permettront de consulter et tester l'API via une interface graphique.
 
-## **Technologies Utilisées**
+## **👨🏼‍💻 Technologies Utilisées**
 - **Backend** : Python, NodesJS
 - **Frontend** : HTML, CSS, JavaScript
 - **Base de Données** : MongoDB
 
-## **Licence**
+## **⚖️ Licence**
 Le jeu Puissance 4 est sous licence Open Source MIT et est disponible gratuitement.
