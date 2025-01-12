@@ -62,9 +62,9 @@ Cela va démarrer les services suivants :
 - **Swagger UI** de l'API game-service :  
    [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Swagger UI** de l'API ai-service :  
-   [http://localhost:8000/docs](http://localhost:8002/docs)
+   [http://localhost:8003/docs](http://localhost:8002/docs)
 - **Swagger UI** de l'API user-service :  
-   [http://localhost:8000/docs](http://localhost:8003/docs)
+   [http://localhost:8002/docs](http://localhost:8003/docs)
 
 Ces adresses vous permettront de consulter et tester l'API via une interface graphique.
 
