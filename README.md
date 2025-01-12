@@ -58,7 +58,10 @@ Cela va démarrer les services suivants :
 - **Base de données** : MongoDB
 - **Frontend** : Serveur HTTP Nginx pour héberger le frontend du jeu
 
-4. **Accéder à la Documentation de l'API** :
+4. **Accéder au jeu** :
+- **Menu** :
+   [http://localhost:8000/menu.html](http://localhost:8000/menu.html)
+5. **Accéder à la Documentation de l'API** :
 - **Swagger UI** de l'API game-service :  
    [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Swagger UI** de l'API ai-service :  
