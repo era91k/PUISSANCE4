@@ -27,7 +27,9 @@ class UserResponse(BaseModel):
         }
         arbitrary_types_allowed = True  # Allow ObjectId to be used directly
 
-router = APIRouter()
+# Définir les routers
+user_router = APIRouter(prefix="/users", tags=["users"])
+auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 # MongoDB configuration
 mongo_uri = os.getenv("MONGO_URI", "mongodb://mongo:27017")
@@ -44,8 +46,22 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def get_user_collection() -> Collection:
     return db["users"]
 
+# Route to get all users
+@user_router.get("/", response_model=List[UserResponse])
+def get_users(user_collection=Depends(get_user_collection)):
+    logger.info("Request received to get all users")
+    users = list(user_collection.find())
+    
+    # Convert ObjectId to string for all users
+    for user in users:
+        user["_id"] = str(user["_id"])  # Convert ObjectId to string
+    
+    logger.info(f"Retrieved {len(users)} users")
+    return users
+
+
 # Route to register a user
-@router.post("/users/register", response_model=UserResponse)
+@user_router.post("/", response_model=UserResponse)
 def create_user(user: UserCreate, user_collection=Depends(get_user_collection)):
     logger.info("Register user request received")
 
@@ -75,21 +91,33 @@ def create_user(user: UserCreate, user_collection=Depends(get_user_collection)):
         logger.error("Failed to insert user into database")
         raise HTTPException(status_code=500, detail="Failed to register user")
 
-# Route to get all users
-@router.get("/users", response_model=List[UserResponse])
-def get_users(user_collection=Depends(get_user_collection)):
-    logger.info("Request received to get all users")
-    users = list(user_collection.find())
+
+@user_router.delete("/{user_id}", status_code=204)
+def delete_user(user_id: str, user_collection=Depends(get_user_collection)):
+    """
+    Supprime un utilisateur par son ID.
+    """
+    # Vérifie si l'ID est valide
+    if not ObjectId.is_valid(user_id):
+        logger.error(f"Invalid user ID: {user_id}")
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    logger.info(f"Delete request received for user ID: {user_id}")
+
+    # Supprime l'utilisateur
+    result = user_collection.delete_one({"_id": ObjectId(user_id)})
+
+    # Vérifie si un utilisateur a été supprimé
+    if result.deleted_count == 1:
+        logger.info(f"User with ID {user_id} successfully deleted")
+        return  # FastAPI renverra un HTTP 204 No Content
+    else:
+        logger.error(f"User with ID {user_id} not found")
+        raise HTTPException(status_code=404, detail="User not found")
     
-    # Convert ObjectId to string for all users
-    for user in users:
-        user["_id"] = str(user["_id"])  # Convert ObjectId to string
-    
-    logger.info(f"Retrieved {len(users)} users")
-    return users
 
 # Route to login a user
-@router.post("/users/login")
+@auth_router.post("/")
 def login_user(
     user_collection=Depends(get_user_collection),
     name: str = Body(..., embed=True),
@@ -104,7 +132,7 @@ def login_user(
     raise HTTPException(status_code=400, detail="Invalid username or password")
 
 # Route to get the score of a user
-@router.get("/users/{name}/score", response_model=int)
+@user_router.get("/{name}/score", response_model=int)
 def get_user_score(name: str, user_collection=Depends(get_user_collection)):
     logger.info(f"Request received to get score for user {name}")
     user = user_collection.find_one({"name": name})
@@ -115,7 +143,7 @@ def get_user_score(name: str, user_collection=Depends(get_user_collection)):
         raise HTTPException(status_code=404, detail="User not found")
 
 # Route to get all users' scores
-@router.get("/users/scores", response_model=List[UserResponse])
+@user_router.get("/scores", response_model=List[UserResponse])
 def get_all_scores(user_collection=Depends(get_user_collection)):
     logger.info("Request received to get all users' scores")
     users = list(user_collection.find({}, {"name": 1, "email": 1, "score": 1}))
