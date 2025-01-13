@@ -376,6 +376,8 @@ document.addEventListener('DOMContentLoaded', function() {
           previousBoardState = blankBoard(rows, cols);
           createBoard({});
           messageElement.textContent = "La partie est réinitialisée !";
+          restartButton.style.display = 'none';
+          menuButton.style.display = 'none';
 
           pollForMoves(gameCode);
       } catch (error) {
