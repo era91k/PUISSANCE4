@@ -27,7 +27,8 @@
 ## **📝 Installation et Exécution**
 
 ### **Pré-requis** :
-- Docker et Docker Compose installés sur votre machine.
+- Python3 installé sur votre machine pour lancer les tests.
+- Docker et Docker Compose installés sur votre machine pour lancer le projet.
 
 ### **Étapes d'Installation** :
 
@@ -39,13 +40,24 @@ git clone https://github.com/Marwane-20/PUISSANCE4.git
 cd PUISSANCE4
 ```
 
-2. **Construire l'Image Docker** :
+2. **Lancer les tests unitaires** :
+Installer les dependances du projet :
+```bash
+pip install -r requirements.txt
+```
+Lancer les tests :
+```bash
+pytest
+```
+
+
+3. **Construire l'Image Docker** :
 Cela construira les images Docker nécessaires pour exécuter le projet.
 ```bash
 docker-compose build
 ```
 
-3. **Démarrer le Conteneur Docker** :
+4. **Démarrer le Conteneur Docker** :
 Cette commande lancera les conteneurs Docker et démarrera les services associés.
 ```bash
 docker-compose up
@@ -58,10 +70,10 @@ Cela va démarrer les services suivants :
 - **Base de données** : MongoDB
 - **Frontend** : Serveur HTTP Nginx pour héberger le frontend du jeu
 
-4. **Accéder au jeu** :
+5. **Accéder au jeu** :
 - **Menu** :
    [http://localhost:8000/menu.html](http://localhost:8000/menu.html)
-5. **Accéder à la Documentation de l'API** :
+6. **Accéder à la Documentation de l'API** :
 - **Swagger UI** de l'API game-service :  
    [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Swagger UI** de l'API ai-service :  
