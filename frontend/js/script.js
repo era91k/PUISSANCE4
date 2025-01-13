@@ -950,7 +950,7 @@ menuButton.addEventListener('click', async () => {
   // destroy the code on the server
   if (isOnlineGame && onlineGameCode) {
       try {
-          const resp = await fetch(`${BASE_URL}/game/online/${onlineGameCode}`, {
+          const resp = await fetch(`${BASE_URL}/game-online/${onlineGameCode}`, {
               method: 'DELETE'
           });
           if (!resp.ok) {
