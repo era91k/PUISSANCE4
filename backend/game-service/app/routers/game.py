@@ -194,11 +194,7 @@ def play_online_move(gameCode: str, column: int, player_id: int):
 
 @router_online.patch("/{gameCode}")
 def reset_online_game(gameCode: str):
-    """
-    Resets the specified online game, flipping who starts next.
-    The VERY FIRST reset sets 'current_turn' to 2.
-    Subsequent resets flip from 2->1 or 1->2.
-    """
+
     if gameCode not in online_games:
         raise HTTPException(status_code=404, detail="Game not found.")
 
@@ -208,13 +204,10 @@ def reset_online_game(gameCode: str):
     if "next_start_player" not in game:
         game["next_start_player"] = 2
     else:
-        # Flip 1 <--> 2
         game["next_start_player"] = 1 if game["next_start_player"] == 2 else 2
 
-    # The new starting player for this reset
     start = game["next_start_player"]
 
-    # Reset board
     game["board"] = [[0]*7 for _ in range(6)]
     if "winner_id" in game:
         del game["winner_id"]
@@ -229,28 +222,36 @@ def reset_online_game(gameCode: str):
         "current_turn": start
     }
 
-# @router.post("/online/score")
-# def update_online_score(
-#     gameCode: str = Body(...),
-#     name: str = Body(...),
-#     score: int = Body(...)
-# ):
-#     """
-#     Increments the specified user's score for an ONLINE game identified by `gameCode`.
-#     If the user doesn't exist in the DB, create it with initial score=0 first.
-#     """
-#     if gameCode not in online_games:
-#         raise HTTPException(status_code=404, detail="Game not found.")
+@router_online.post("/score")
+def update_online_score(
+    gameCode: str = Body(...),
+    name: str = Body(...),
+    score: int = Body(...)
+):
 
-#     user_collection = db["users"]
-#     user = user_collection.find_one({"name": name})
+    if gameCode not in online_games:
+        raise HTTPException(status_code=404, detail="Game not found.")
 
-#     # If user doesn't exist, create it
-#     if not user:
-#         user_collection.insert_one({"name": name, "score": 0})
-#         user = user_collection.find_one({"name": name})
+    user_collection = db["users"]
+    user = user_collection.find_one({"name": name})
 
-#     new_score = user.get("score", 0) + score
-#     user_collection.update_one({"name": name}, {"$set": {"score": new_score}})
+    # If user doesn't exist, create it
+    if not user:
+        user_collection.insert_one({"name": name, "score": 0})
+        user = user_collection.find_one({"name": name})
 
-#     return {"name": name, "new_score": new_score}
+    new_score = user.get("score", 0) + score
+    user_collection.update_one({"name": name}, {"$set": {"score": new_score}})
+
+    return {"name": name, "new_score": new_score}
+
+@router_online.delete("/{gameCode}")
+def destroy_online_game(gameCode: str):
+
+    if gameCode not in online_games:
+        raise HTTPException(status_code=404, detail="Game not found.")
+
+    del online_games[gameCode]
+    return {"message": f"Game {gameCode} has been destroyed."}
+
+

@@ -217,3 +217,53 @@ def test_reset_online_game():
     assert result["status"] == "active"
     assert result["current_turn"] == 2
     assert result["board"] == [[0]*7 for _ in range(6)]
+
+
+@patch("app.routers.game.db")
+@patch("app.routers.game.online_games", {"GAME123": {}})
+def test_update_online_score(mock_db):
+    mock_user_collection = MagicMock()
+    mock_db.__getitem__.return_value = mock_user_collection
+    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
+
+    result = update_online_score(gameCode="GAME123", name="Alice", score=5)
+
+    assert result == {"name": "Alice", "new_score": 15}
+    mock_user_collection.update_one.assert_called_with({"name": "Alice"}, {"$set": {"score": 15}})
+
+@patch("app.routers.game.online_games", {"GAME123": {"player1": "Alice", "player2": "Bob"}})
+def test_destroy_online_game():
+    response = destroy_online_game(gameCode="GAME123")
+    assert response == {"message": "Game GAME123 has been destroyed."}
+    assert "GAME123" not in online_games
+
+@patch("app.routers.game.online_games", {})
+def test_destroy_online_game_not_found():
+    with pytest.raises(HTTPException) as exc_info:
+        destroy_online_game(gameCode="GAME123")
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Game not found."
+@patch("app.routers.game.online_games", {"GAME123": {"player1": "Alice", "player2": "Bob", "status": "ready"}})
+def test_get_online_game_status():
+    response = get_online_game_status(gameCode="GAME123")
+    assert response == {"player1": "Alice", "player2": "Bob", "status": "ready"}
+
+
+@patch("app.routers.game.online_games", {})
+def test_get_online_game_status_not_found():
+    with pytest.raises(HTTPException) as exc_info:
+        get_online_game_status(gameCode="GAME123")
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Game not found."
+
+
+
+
+@patch("app.routers.game.online_games", {"GAME123": {"player1": "Alice", "player2": "Bob", "board": [[0]*7 for _ in range(6)], "current_turn": 1, "status": "active"}})
+def test_play_online_move_invalid_column():
+    with pytest.raises(HTTPException) as exc_info:
+        play_online_move(gameCode="GAME123", column=10, player_id=1)
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Invalid column"
+
+
