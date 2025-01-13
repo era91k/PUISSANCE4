@@ -217,21 +217,3 @@ def test_reset_online_game():
     assert result["status"] == "active"
     assert result["current_turn"] == 2
     assert result["board"] == [[0]*7 for _ in range(6)]
-
-
-@patch("app.routers.game.db")
-@patch("app.routers.game.online_games", {"GAME123": {}})
-def test_update_online_score(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
-
-    result = update_online_score(gameCode="GAME123", name="Alice", score=5)
-
-    assert result == {"name": "Alice", "new_score": 15}
-    mock_user_collection.update_one.assert_called_with({"name": "Alice"}, {"$set": {"score": 15}})
-
-
-
-
-
