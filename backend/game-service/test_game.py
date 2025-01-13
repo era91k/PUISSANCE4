@@ -47,11 +47,10 @@ def test_create_game_ok():
 def test_play_move_invalid_column():
     mock_game = MagicMock(spec=Game)
     mock_game.id = 1
-    column = -1
-    player_id = 456
+    move = Move(column=-1, player_id=456)
 
     with pytest.raises(HTTPException) as exc_info:
-        play_move(mock_game.id, column, player_id)
+        play_move(mock_game.id, move)
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Invalid column"
@@ -74,9 +73,10 @@ def test_play_move_column_full(mock_drop_piece):
         ],
     )
     game = create_game(game)
+    move = Move(column=3, player_id=1)
 
     with pytest.raises(HTTPException) as exc_info:
-        play_move(game.id, 3, 1)
+        play_move(game.id, move)
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Column is full"
@@ -101,6 +101,7 @@ def test_play_move_win(mock_check_winner, mock_drop_piece):
         ],
     )
     game = create_game(game)
+    move = Move(column=3, player_id=1)
     result = play_move(game.id, 3, 1)
 
     assert result["status"] == "won"
@@ -125,6 +126,7 @@ def test_play_move_draw(mock_check_winner, mock_drop_piece):
         ],
     )
     game = create_game(game)
+    move = Move(column=3, player_id=1)
     result = play_move(game.id, 3, 1)
 
     assert result["status"] == "draw"
@@ -149,14 +151,16 @@ def test_play_move_draw(mock_check_winner, mock_drop_piece):
         ],
     )
     game = create_game(game)
-    result = play_move(game.id, 3, 1)
+    move = Move(column=3, player_id=1)
+    result = play_move(game.id, move)
 
     assert result["status"] == "active"
 
 
 def test_play_move_game_not_found():
+    move = Move(column=3, player_id=1)
     with pytest.raises(HTTPException) as exc_info:
-        play_move(123, 3, 1)
+        play_move(123, move)
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Game not found"
