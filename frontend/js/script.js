@@ -13,7 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let player2Name = document.getElementById('player2Name') ||'Joueur2';
     let player1Score = 0;
     let player2Score = 0;
+    let victoryCelebrated = false;
     const BASE_URL = "http://127.0.0.1:8000";
+
   
     const boardElement = document.getElementById('board');
     const messageElement = document.getElementById('message');
@@ -267,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   if (!gameOver) {
                       gameOver = true;
                       renderOnlineBoard(data);
-                      celebrateWinOnline(data.winner_id);
+                      celebrateWinOffline(data.winner_id);
                   }
               } else if (data.status === "draw") {
                   if (!gameOver) {
@@ -467,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     previousBoardState = updatedData.board.map(row => [...row]);
   
                     if (moveResult.status === 'won') {
-                        setTimeout(() => celebrateWinOnline(moveResult.winner_id), 100);
+                        setTimeout(() => celebrateWinOffline(localPlayerId), 100);
                     } else if (moveResult.status === 'draw') {
                         messageElement.textContent = "Match nul !";
                         boardElement.style.pointerEvents = 'none';
@@ -616,6 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // WIN OFFLINE
     function celebrateWinOffline(wpid) {
+       gameOver = true;
       const winnerName = (wpid === 1) ? player1Name : player2Name;
       const winSound = new Audio("js/win.mp3"); // Chargement du son de victoire
       messageElement.textContent = `${winnerName} a gagné !`;
@@ -714,8 +717,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // PLAY MOVE OFFLINE
     async function playMove(gameId, column, playerId) {
         try {
-            const resp = await fetch(`${BASE_URL}/game/${gameId}/play?column=${column}&player_id=${playerId}`, {
-                method: 'PUT'
+            const resp = await fetch(`${BASE_URL}/game/${gameId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    column: column,
+                    player_id: playerId
+                })
             });
             if (!resp.ok) {
                 const e = await resp.json();
