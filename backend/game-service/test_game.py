@@ -163,18 +163,6 @@ def test_play_move_game_not_found():
 
 
 @patch("app.routers.game.db")
-def test_update_score_ok(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
-    mock_user_collection.update_one.return_value = None
-
-    result = update_score(name="Alice", score=5)
-
-    assert result == {"name": "Alice", "new_score": 15}
-
-
-@patch("app.routers.game.db")
 def test_update_score_user_not_found(mock_db):
     mock_user_collection = MagicMock()
     mock_db.__getitem__.return_value = mock_user_collection

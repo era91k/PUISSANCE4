@@ -14,8 +14,8 @@ app.add_middleware(
 )
 
 # Inclure les routes du service de jeu
-app.include_router(game.router, prefix="/game")
-app.include_router(player.router, prefix="/players")
+app.include_router(game.router, prefix="/game", tags=["game"])
+app.include_router(game.router_online, prefix="/game-online", tags=["game-online"])
 
 # Route d'accueil
 @app.get("/")

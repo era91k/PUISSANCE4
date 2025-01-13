@@ -132,7 +132,7 @@ def login_user(
     raise HTTPException(status_code=400, detail="Invalid username or password")
 
 # Route to get the score of a user
-@user_router.get("/{name}/score", response_model=int)
+@user_router.get("/score/{name}", response_model=int)
 def get_user_score(name: str, user_collection=Depends(get_user_collection)):
     logger.info(f"Request received to get score for user {name}")
     user = user_collection.find_one({"name": name})

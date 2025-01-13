@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let player2Score = 0;
     let victoryCelebrated = false;
     const BASE_URL = "http://127.0.0.1:8000";
+    const API_USERS_URL = "http://127.0.0.1:8002";
 
   
     const boardElement = document.getElementById('board');
@@ -148,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   
       try {
-          const response = await fetch(`${BASE_URL}/game/online`, {
+          const response = await fetch(`${BASE_URL}/game-online`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ playerName, gameCode })
@@ -190,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
   
       try {
-          const response = await fetch(`${BASE_URL}/game/online/join`, {
+          const response = await fetch(`${BASE_URL}/game-online/join`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ playerName, gameCode })
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function pollForOpponent(gameCode) {
         const intervalId = setInterval(async () => {
             try {
-                const resp = await fetch(`${BASE_URL}/game/online/${gameCode}`);
+                const resp = await fetch(`${BASE_URL}/game-online/${gameCode}`);
                 if (!resp.ok) return;
                 const data = await resp.json();
   
@@ -257,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
       pollIntervalId = setInterval(async () => {
           try {
-              const resp = await fetch(`${BASE_URL}/game/online/${gameCode}`);
+              const resp = await fetch(`${BASE_URL}/game-online/${gameCode}`);
               if (!resp.ok) return;
               const data = await resp.json();
   
@@ -358,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //RESET an ONLINE GAME
     async function resetOnlineGame(gameCode) {
       try {
-          const resp = await fetch(`${BASE_URL}/game/online/${gameCode}/reset`, { method: 'PUT' });
+          const resp = await fetch(`${BASE_URL}/game-online/${gameCode}`, { method: 'PATCH' });
           if (!resp.ok) {
               const e = await resp.json();
               alert(e.detail || "Erreur lors de la réinitialisation de la partie en ligne");
@@ -374,7 +375,8 @@ document.addEventListener('DOMContentLoaded', function() {
           previousBoardState = blankBoard(rows, cols);
           createBoard({});
           messageElement.textContent = "La partie est réinitialisée !";
-  
+          restartButton.style.display = 'none';
+          menuButton.style.display = 'none';
           pollForMoves(gameCode);
       } catch (error) {
           console.error("resetOnlineGame error:", error);
@@ -451,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function handleClick(col, gameData) {
         if (isOnlineGame && onlineGameCode) {
             try {
-                const st = await fetch(`${BASE_URL}/game/online/${onlineGameCode}`);
+                const st = await fetch(`${BASE_URL}/game-online/${onlineGameCode}`);
                 if (!st.ok) return;
                 const currentData = await st.json();
   
@@ -546,7 +548,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ONLINE Move
     async function playMoveOnline(gc, col, pid) {
         try {
-            const resp = await fetch(`${BASE_URL}/game/online/${gc}/play?column=${col}&player_id=${pid}`, {
+            const resp = await fetch(`${BASE_URL}/game-online/${gc}?column=${col}&player_id=${pid}`, {
                 method: 'PUT'
             });
             if (!resp.ok) {
@@ -564,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ------------- LOAD an Existing Online Game -------------
     async function loadGameGrid(gc) {
         try {
-            const r = await fetch(`${BASE_URL}/game/online/${gc}`);
+            const r = await fetch(`${BASE_URL}/game-online/${gc}`);
             if (!r.ok) {
                 const e = await r.json();
                 alert(e.detail || "Erreur loadGameGrid");
@@ -618,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // WIN OFFLINE
     function celebrateWinOffline(wpid) {
-       gameOver = true;
+        gameOver = true;
       const winnerName = (wpid === 1) ? player1Name : player2Name;
       const winSound = new Audio("js/win.mp3"); // Chargement du son de victoire
       messageElement.textContent = `${winnerName} a gagné !`;
@@ -741,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
     async function updateOnlineScore(gameCode, name, sc) {
         try {
-            const resp = await fetch(`${BASE_URL}/game/online/score`, {
+            const resp = await fetch(`${BASE_URL}/game-online/score`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ gameCode, name, score: sc })
@@ -762,20 +764,21 @@ document.addEventListener('DOMContentLoaded', function() {
   
     // REFRESH the Online Scoreboard
     async function updateOnlineScoreboard() {
+        console.log("Updating online scoreboard...");
         if (!player1Name || !player2Name) return;
   
         try {
             let p1 = 0, p2 = 0;
   
             // get player1Name
-            const r1 = await fetch(`${BASE_URL}/game/get_score/${player1Name}`);
+            const r1 = await fetch(`${API_USERS_URL}/users/score/${player1Name}`);
             if (r1.ok) {
                 const d1 = await r1.json();
                 p1 = d1.score || 0;
             }
   
             // get player2Name
-            const r2 = await fetch(`${BASE_URL}/game/get_score/${player2Name}`);
+            const r2 = await fetch(`${API_USERS_URL}/users/score/${player2Name}`);
             if (r2.ok) {
                 const d2 = await r2.json();
                 p2 = d2.score || 0;
@@ -894,7 +897,7 @@ window.placePiece = async function(column) {
     if (isOnlineGame && onlineGameCode) {
         try {
             // Vérifie si c'est le tour du joueur
-            const response = await fetch(`${BASE_URL}/game/online/${onlineGameCode}`);
+            const response = await fetch(`${BASE_URL}/game-online/${onlineGameCode}`);
             if (!response.ok) {
                 throw new Error('Erreur lors de la récupération de l\'état du jeu');
             }
