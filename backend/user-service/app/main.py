@@ -20,7 +20,8 @@ client = MongoClient(mongo_uri)
 db = client["user_db"]
 
 # Inclure les routes du service utilisateur
-app.include_router(user.router)
+app.include_router(user.user_router)
+app.include_router(user.auth_router)
 
 # Route d'accueil
 @app.get("/")
