@@ -5,11 +5,13 @@ from typing import List
 from pymongo import MongoClient
 import os
 import logging
+from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+router_online = APIRouter()
 
 mongo_uri = os.getenv("MONGO_URI", "mongodb://mongo:27017")
 client = MongoClient(mongo_uri)
@@ -18,12 +20,20 @@ db = client["user_db"]
 games: List[Game] = []
 online_games = {}
 
+class Move(BaseModel):
+    column: int
+    player_id: int
+
 def drop_piece(board: List[List[int]], column: int, player_id: int) -> int:
     for row_index in range(len(board) - 1, -1, -1):
         if board[row_index][column] == 0:
             board[row_index][column] = player_id
             return row_index
     return -1
+
+@router.get("/", response_model=List[Game])
+def get_games():
+    return games
 
 @router.post("/", response_model=Game)
 def create_game(game: Game):
@@ -32,26 +42,34 @@ def create_game(game: Game):
     logger.info(f"Game created with ID: {game.id}")
     return game
 
-@router.put("/{game_id}/play")
-def play_move(game_id: int, column: int, player_id: int):
+@router.delete("/{game_id}")
+def delete_game(game_id: int):
     for game in games:
         if game.id == game_id:
-            if column < 0 or column >= len(game.board[0]):
+            games.remove(game)
+            return {"message": "Game deleted successfully"}
+    raise HTTPException(status_code=404, detail="Game not found")
+
+@router.put("/{game_id}")
+def play_move(game_id: int, move: Move):
+    for game in games:
+        if game.id == game_id:
+            if move.column < 0 or move.column >= len(game.board[0]):
                 raise HTTPException(status_code=400, detail="Invalid column")
 
-            row_index = drop_piece(game.board, column, player_id)
+            row_index = drop_piece(game.board, move.column, move.player_id)
             if row_index == -1:
                 raise HTTPException(status_code=400, detail="Column is full")
 
-            if check_winner(game.board, player_id):
+            if check_winner(game.board, move.player_id):
                 game.status = "won"
                 return {
-                    "message": f"Player {player_id} wins!",
+                    "message": f"Player {move.player_id} wins!",
                     "board": game.board,
                     "status": game.status,
                     "id": game.id,
                     "row": row_index,
-                    "player_id": player_id
+                    "player_id": move.player_id
                 }
 
             if all(cell != 0 for row in game.board for cell in row):
@@ -62,41 +80,23 @@ def play_move(game_id: int, column: int, player_id: int):
                     "status": game.status,
                     "id": game.id,
                     "row": row_index,
-                    "player_id": player_id
+                    "player_id": move.player_id
                 }
 
-            game.current_turn = 2 if player_id == 1 else 1
+            game.current_turn = 2 if move.player_id == 1 else 1
             return {
-                "message": f"Player {player_id} played in column {column}",
+                "message": f"Player {move.player_id} played in column {move.column}",
                 "board": game.board,
                 "status": game.status,
                 "current_turn": game.current_turn,
                 "row": row_index,
-                "player_id": player_id
+                "player_id": move.player_id
             }
 
     raise HTTPException(status_code=404, detail="Game not found")
 
-@router.post("/update_score")
-def update_score(name: str = Body(...), score: int = Body(...)):
-    user_collection = db["users"]
-    user = user_collection.find_one({"name": name})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
 
-    new_score = user.get("score", 0) + score
-    user_collection.update_one({"name": name}, {"$set": {"score": new_score}})
-    return {"name": name, "new_score": new_score}
-
-@router.get("/get_score/{name}")
-def get_score(name: str):
-    user_collection = db["users"]
-    user = user_collection.find_one({"name": name})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"name": name, "score": user.get("score", 0)}
-
-@router.post("/online")
+@router_online.post("/")
 def create_online_game(playerName: str = Body(...), gameCode: str = Body(...)):
     if gameCode in online_games:
         raise HTTPException(status_code=400, detail="Game code already exists.")
@@ -114,7 +114,7 @@ def create_online_game(playerName: str = Body(...), gameCode: str = Body(...)):
     }
     return {"message": "Online game created successfully."}
 
-@router.post("/online/join")
+@router_online.post("/join")
 def join_online_game(playerName: str = Body(...), gameCode: str = Body(...)):
     if gameCode not in online_games:
         raise HTTPException(status_code=404, detail="Game not found.")
@@ -133,14 +133,13 @@ def join_online_game(playerName: str = Body(...), gameCode: str = Body(...)):
     game["status"] = "ready"
     return {"message": "Joined game successfully.", "game": game}
 
-@router.get("/online/{gameCode}")
+@router_online.get("/{gameCode}")
 def get_online_game_status(gameCode: str):
     if gameCode not in online_games:
         raise HTTPException(status_code=404, detail="Game not found.")
     return online_games[gameCode]
 
-@router.put("/online/{gameCode}/play")
-@router.put("/online/{gameCode}/play")
+@router_online.put("/{gameCode}")
 def play_online_move(gameCode: str, column: int, player_id: int):
     if gameCode not in online_games:
         raise HTTPException(status_code=404, detail="Game not found.")
@@ -193,7 +192,7 @@ def play_online_move(gameCode: str, column: int, player_id: int):
     }
 
 
-@router.put("/online/{gameCode}/reset")
+@router_online.patch("/{gameCode}")
 def reset_online_game(gameCode: str):
 
     if gameCode not in online_games:
@@ -254,4 +253,5 @@ def destroy_online_game(gameCode: str):
 
     del online_games[gameCode]
     return {"message": f"Game {gameCode} has been destroyed."}
+
 

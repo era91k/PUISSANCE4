@@ -47,11 +47,10 @@ def test_create_game_ok():
 def test_play_move_invalid_column():
     mock_game = MagicMock(spec=Game)
     mock_game.id = 1
-    column = -1
-    player_id = 456
+    move = Move(column=-1, player_id=456)
 
     with pytest.raises(HTTPException) as exc_info:
-        play_move(mock_game.id, column, player_id)
+        play_move(mock_game.id, move)
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Invalid column"
@@ -74,9 +73,10 @@ def test_play_move_column_full(mock_drop_piece):
         ],
     )
     game = create_game(game)
+    move = Move(column=3, player_id=1)
 
     with pytest.raises(HTTPException) as exc_info:
-        play_move(game.id, 3, 1)
+        play_move(game.id, move)
 
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Column is full"
@@ -101,7 +101,8 @@ def test_play_move_win(mock_check_winner, mock_drop_piece):
         ],
     )
     game = create_game(game)
-    result = play_move(game.id, 3, 1)
+    move = Move(column=3, player_id=1)
+    result = play_move(game.id, move)
 
     assert result["status"] == "won"
 
@@ -125,7 +126,8 @@ def test_play_move_draw(mock_check_winner, mock_drop_piece):
         ],
     )
     game = create_game(game)
-    result = play_move(game.id, 3, 1)
+    move = Move(column=3, player_id=1)
+    result = play_move(game.id, move)
 
     assert result["status"] == "draw"
 
@@ -149,79 +151,19 @@ def test_play_move_draw(mock_check_winner, mock_drop_piece):
         ],
     )
     game = create_game(game)
-    result = play_move(game.id, 3, 1)
+    move = Move(column=3, player_id=1)
+    result = play_move(game.id, move)
 
     assert result["status"] == "active"
 
 
 def test_play_move_game_not_found():
+    move = Move(column=3, player_id=1)
     with pytest.raises(HTTPException) as exc_info:
-        play_move(123, 3, 1)
+        play_move(123, move)
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Game not found"
-
-
-@patch("app.routers.game.db")
-def test_update_score_ok(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
-    mock_user_collection.update_one.return_value = None
-
-    result = update_score(name="Alice", score=5)
-
-    assert result == {"name": "Alice", "new_score": 15}
-
-
-@patch("app.routers.game.db")
-def test_update_score_user_not_found(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = None
-
-    with pytest.raises(HTTPException) as exc_info:
-        update_score(name="Bob", score=5)
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "User not found"
-
-
-@patch("app.routers.game.db")
-def test_get_score_ok(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 15}
-
-    result = get_score(name="Alice")
-
-    assert result == {"name": "Alice", "score": 15}
-    mock_user_collection.find_one.assert_called_with({"name": "Alice"})
-
-
-@patch("app.routers.game.db")
-def test_get_score_user_not_found(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-
-    mock_user_collection.find_one.return_value = None
-
-    with pytest.raises(HTTPException) as exc_info:
-        get_score(name="Bob")
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "User not found"
-
-@patch("app.routers.game.db")
-def test_get_score_existing_user(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
-
-    result = get_score(name="Alice")
-
-    assert result == {"name": "Alice", "score": 10}
-    mock_user_collection.find_one.assert_called_with({"name": "Alice"})
 
 
 @patch("app.routers.game.online_games", new_callable=dict)
@@ -275,21 +217,3 @@ def test_reset_online_game():
     assert result["status"] == "active"
     assert result["current_turn"] == 2
     assert result["board"] == [[0]*7 for _ in range(6)]
-
-
-@patch("app.routers.game.db")
-@patch("app.routers.game.online_games", {"GAME123": {}})
-def test_update_online_score(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
-
-    result = update_online_score(gameCode="GAME123", name="Alice", score=5)
-
-    assert result == {"name": "Alice", "new_score": 15}
-    mock_user_collection.update_one.assert_called_with({"name": "Alice"}, {"$set": {"score": 15}})
-
-
-
-
-

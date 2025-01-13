@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        fetch('http://localhost:8002/users/register', {
+        fetch('http://localhost:8002/users', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             alert('Compte créé avec succès !');
             console.log('User created:', data);
+            // Stocker le nom de l'utilisateur dans le stockage local
+            localStorage.setItem('username', username);
+            // Redirect to the game page
+            window.location.href = 'menu.html';
         })
         .catch(error => {
             console.error('Erreur:', error.message);
@@ -47,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
 
-        fetch('http://localhost:8002/users/login', {
+        fetch('http://localhost:8002/auth', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

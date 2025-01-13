@@ -1,8 +1,8 @@
-fastapi==0.65.2
-pydantic==1.8.2
-uvicorn==0.13.4
-pymongo==3.11.4
-passlib[bcrypt]==1.7.4
 pytest==6.2.4
+pytest-cov==4.1.0
+diff_cover==9.2.1
 pytest-asyncio==0.14.0
 httpx==0.18.2
+-r backend/ai-service/requirements.txt
+-r backend/game-service/requirements.txt
+-r backend/user-service/requirements.txt
