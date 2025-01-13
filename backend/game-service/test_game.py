@@ -102,7 +102,7 @@ def test_play_move_win(mock_check_winner, mock_drop_piece):
     )
     game = create_game(game)
     move = Move(column=3, player_id=1)
-    result = play_move(game.id, 3, 1)
+    result = play_move(game.id, move)
 
     assert result["status"] == "won"
 
@@ -127,7 +127,7 @@ def test_play_move_draw(mock_check_winner, mock_drop_piece):
     )
     game = create_game(game)
     move = Move(column=3, player_id=1)
-    result = play_move(game.id, 3, 1)
+    result = play_move(game.id, move)
 
     assert result["status"] == "draw"
 
