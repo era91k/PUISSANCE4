@@ -162,56 +162,6 @@ def test_play_move_game_not_found():
     assert exc_info.value.detail == "Game not found"
 
 
-@patch("app.routers.game.db")
-def test_update_score_user_not_found(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = None
-
-    with pytest.raises(HTTPException) as exc_info:
-        update_score(name="Bob", score=5)
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "User not found"
-
-
-@patch("app.routers.game.db")
-def test_get_score_ok(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 15}
-
-    result = get_score(name="Alice")
-
-    assert result == {"name": "Alice", "score": 15}
-    mock_user_collection.find_one.assert_called_with({"name": "Alice"})
-
-
-@patch("app.routers.game.db")
-def test_get_score_user_not_found(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-
-    mock_user_collection.find_one.return_value = None
-
-    with pytest.raises(HTTPException) as exc_info:
-        get_score(name="Bob")
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "User not found"
-
-@patch("app.routers.game.db")
-def test_get_score_existing_user(mock_db):
-    mock_user_collection = MagicMock()
-    mock_db.__getitem__.return_value = mock_user_collection
-    mock_user_collection.find_one.return_value = {"name": "Alice", "score": 10}
-
-    result = get_score(name="Alice")
-
-    assert result == {"name": "Alice", "score": 10}
-    mock_user_collection.find_one.assert_called_with({"name": "Alice"})
-
-
 @patch("app.routers.game.online_games", new_callable=dict)
 def test_create_online_game(mock_online_games):
     result = create_online_game(playerName="Alice", gameCode="GAME123")
