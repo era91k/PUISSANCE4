@@ -840,7 +840,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-// Déplacer le code de reconnaissance vocale à l'intérieur du DOMContentLoaded
+
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
