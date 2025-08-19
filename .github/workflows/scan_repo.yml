@@ -24,7 +24,7 @@ jobs:
 
       - name: Run Python check
         run: |
-          python .github/scripts/scan_repo.py > scan.txt
+          python .github/scripts/scan_repo.py > scan.md
 
       - name: Summary
         if: always()
