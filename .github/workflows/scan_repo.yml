@@ -1,0 +1,38 @@
+name: Repo Scan
+
+on:
+  # Bouton manuel "Run workflow" dans l’onglet Actions
+  workflow_dispatch: {}
+
+  # Exécution périodique (heure en UTC)
+  schedule:
+    - cron: "0 7 * * *"   # chaque jour à 07:00 UTC
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Python check
+        run: |
+          python .github/scripts/scan_repo.py > scan.txt
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## 🔍 Résultat du scan"
+            echo
+            echo '```'
+            cat scan.txt
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
