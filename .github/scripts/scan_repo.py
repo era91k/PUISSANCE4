@@ -4,20 +4,44 @@ import sys
 
 root = Path(".")
 
-checks = [
-    ("README.md", "README.md présent à la racine du dépôt."),
-    ("SECURITY.md", "SECURITY.md présent à la racine du dépôt."),
+# Pour certains fichiers, GitHub accepte plusieurs emplacements usuels.
+CHECKS = [
+    ("README.md",                ["README.md"]),
+    ("SECURITY.md",              ["SECURITY.md"]),
+    ("CONTRIBUTING.md",          ["CONTRIBUTING.md", ".github/CONTRIBUTING.md"]),
+    ("CODEOWNERS",               ["CODEOWNERS", ".github/CODEOWNERS", "docs/CODEOWNERS"]),
+    ("PULL_REQUEST_TEMPLATE.md", ["PULL_REQUEST_TEMPLATE.md",
+                                  ".github/PULL_REQUEST_TEMPLATE.md",
+                                  ".github/pull_request_template.md"]),
+    ("SECURITY_LOG.md",          ["SECURITY_LOG.md"]),
+    ("CHANGELOG.md",             ["CHANGELOG.md", "CHANGELOG", "docs/CHANGELOG.md"]),
 ]
 
+rows = []
 missing = False
 
-for filename, success_msg in checks:
-    file_path = root / filename
-    if file_path.exists():
-        print(f"✅ {success_msg}")
+def find_first(paths):
+    for p in paths:
+        path = root / p
+        if path.exists():
+            return p
+    return None
+
+# En-tête du tableau Markdown
+print("| Fichier | Présent | Détail |")
+print("|---|:---:|---|")
+
+for display_name, candidates in CHECKS:
+    found_at = find_first(candidates)
+    if found_at:
+        rows.append((display_name, "✅", f"Trouvé à `{found_at}`"))
     else:
-        print(f"❌ {filename} manquant à la racine du dépôt.")
+        rows.append((display_name, "❌", "Manquant"))
         missing = True
 
-# Si au moins un fichier requis est manquant → échec
+# Lignes du tableau
+for name, ok, detail in rows:
+    print(f"| `{name}` | {ok} | {detail} |")
+
+# Si au moins un fichier requis manque, code de sortie 1 pour faire échouer le job
 sys.exit(1 if missing else 0)
