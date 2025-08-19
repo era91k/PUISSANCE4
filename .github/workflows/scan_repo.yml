@@ -32,7 +32,5 @@ jobs:
           {
             echo "## 🔍 Résultat du scan"
             echo
-            echo '```'
-            cat scan.txt
-            echo '```'
+            cat scan.md
           } >> $GITHUB_STEP_SUMMARY
