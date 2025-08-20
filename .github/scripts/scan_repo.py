@@ -41,7 +41,8 @@ for category, label, candidates in CHECKS:
         else:
             ok = "❌"
             missing += 1
-    lines.append(f"| `{category}` | {label} | {ok} |")
+    cat_display = f"`{category}`" if category else ""
+    lines.append(f"| {cat_display} | {label} | {ok} |")
 
 # --- Bilan visuel ---
 total = present + missing
@@ -53,10 +54,9 @@ status = "🟢 **Conforme**" if missing == 0 else "🔴 **Incomplet**"
 lines.append("")
 lines.append("### 🧾 Bilan")
 lines.append(f"- **Présents :** {present} / {total} &nbsp;&nbsp;—&nbsp;&nbsp; **Manquants :** {missing}")
-lines.append(f"- **Score :** {percent}%")
 lines.append(f"- **Progression :** `[ {bar} ]` {percent}%")
 lines.append(f"- **Statut :** {status}")
 
 print("\n".join(lines))
 
-sys.exit(1 if missing else 0)
+sys.exit(1)
