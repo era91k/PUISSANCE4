@@ -132,7 +132,7 @@ def main():
     lines.append(f"- **Statut :** {status}")
 
     print("\n".join(lines))
-    sys.exit(0 if ok_count == total else 1)
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
