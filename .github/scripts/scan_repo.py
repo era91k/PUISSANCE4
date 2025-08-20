@@ -5,16 +5,16 @@ import sys, math
 root = Path(".")
 
 CHECKS = [
-    ("GOUVERNANCE / PREVENTION", "SECURITY.md présent", ["SECURITY.md"]),
-    ("", "CONTRIBUTING.md présent", ["CONTRIBUTING.md", ".github/CONTRIBUTING.md"]),
-    ("", "CODEOWNERS présent", ["CODEOWNERS", ".github/CODEOWNERS"]),
+    ("GOUVERNANCE / PREVENTION", "SECURITY.md", ["SECURITY.md"]),
+    ("", "CONTRIBUTING.md", ["CONTRIBUTING.md", ".github/CONTRIBUTING.md"]),
+    ("", "CODEOWNERS", ["CODEOWNERS", ".github/CODEOWNERS"]),
     ("", "Protection des branches activée", []),  # TODO via API
-    ("", "Modèle de PR (PULL_REQUEST_TEMPLATE.md) présent",
+    ("", "Modèle de PR (PULL_REQUEST_TEMPLATE.md)",
      ["PULL_REQUEST_TEMPLATE.md", ".github/PULL_REQUEST_TEMPLATE.md", ".github/pull_request_template.md"]),
     ("", "Commits signés (GPG)", []),  # TODO via API
-    ("GOUVERNANCE / REACTION", "SECURITY_LOG.md présent", ["SECURITY_LOG.md"]),
-    ("TECHNIQUE / PREVENTION", "README.md présent", ["README.md"]),
-    ("TECHNIQUE / REACTION", "CHANGELOG.md présent", ["CHANGELOG.md", "CHANGELOG", "docs/CHANGELOG.md"]),
+    ("GOUVERNANCE / REACTION", "SECURITY_LOG.md", ["SECURITY_LOG.md"]),
+    ("TECHNIQUE / PREVENTION", "README.md", ["README.md"]),
+    ("TECHNIQUE / REACTION", "CHANGELOG.md", ["CHANGELOG.md", "CHANGELOG", "docs/CHANGELOG.md"]),
 ]
 
 def find_first(paths):
@@ -41,7 +41,7 @@ for category, label, candidates in CHECKS:
         else:
             ok = "❌"
             missing += 1
-    lines.append(f"| {category} | {label} | {ok} |")
+    lines.append(f"| `{category}` | {label} | {ok} |")
 
 # --- Bilan visuel ---
 total = present + missing
