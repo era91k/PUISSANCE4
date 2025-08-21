@@ -109,25 +109,42 @@ def main():
     total = 0
     ok_count = 0
 
+    # Pour stocker scores par axe
+    per_axis_scores = []
+
     for section, checks in SECTIONS:
         first_row = True
+        section_total = 0
+        section_ok = 0
+
         for label, fn in checks:
             ok = fn()
             lines.append(f"| {section if first_row else ''} | {label} | {'✅' if ok else '❌'} |")
             total += 1
             ok_count += 1 if ok else 0
+            section_total += 1
+            section_ok += 1 if ok else 0
             first_row = False
 
-    # Bilan global
+        # Calcul score par axe
+        section_percent = 0 if section_total == 0 else round(100 * section_ok / section_total)
+        per_axis_scores.append((section, section_ok, section_total, section_percent))
+
+    # Résumé global
     percent = 0 if total == 0 else round(100 * ok_count / total)
     filled = 0 if total == 0 else math.floor(percent / 10)
     bar = "█" * filled + "░" * (10 - filled)
     status = "🟢 **Conforme**" if ok_count == total else "🔴 **Incomplet**"
 
     lines.append("")
-    lines.append("### 🧾 Bilan")
+    lines.append("### 📊 Scores par axe")
+    for section, ok, tot, pct in per_axis_scores:
+        bar_axis = "█" * math.floor(pct / 10) + "░" * (10 - math.floor(pct / 10))
+        lines.append(f"- {section} : {ok}/{tot} — {pct}% `[ {bar_axis} ]`")
+
+    lines.append("")
+    lines.append("### 🧾 Bilan global")
     lines.append(f"- **Présents :** {ok_count} / {total}  —  **Manquants :** {total - ok_count}")
-    lines.append(f"- **Score :** {percent}%")
     lines.append(f"- **Progression :** `[ {bar} ]` {percent}%")
     lines.append(f"- **Statut :** {status}")
 
