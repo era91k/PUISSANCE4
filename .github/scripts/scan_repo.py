@@ -137,10 +137,9 @@ def main():
     status = "🟢 **Conforme**" if ok_count == total else "🔴 **Incomplet**"
 
     lines.append("")
-    lines.append("### 📊 Scores par axe")
+    lines.append("### 📊 Score par axe")
     for section, ok, tot, pct in per_axis_scores:
-        bar_axis = "█" * math.floor(pct / 10) + "░" * (10 - math.floor(pct / 10))
-        lines.append(f"- {section} : {ok}/{tot} — {pct}% `[ {bar_axis} ]`")
+        lines.append(f"- {section} : {ok}/{tot} — {pct}%")
 
     lines.append("")
     lines.append("### 🧾 Bilan global")
